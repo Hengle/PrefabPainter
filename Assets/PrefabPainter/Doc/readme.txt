@@ -8,33 +8,30 @@ Usage
 General
 
 	* create container gameobject for the instantiated prefabs
-	* create an editor gameobject add the PrefabPainter script to it
+	* create an editor gameobject, add the PrefabPainter script to it
 	* in the inspector assign the container and a prefab to the prefab painter editor settings
+
+Paint Mode
+
 	* in scene view adjust the radius via ctrl + mouse wheel
 	* start painting prefabs by clicking left mouse button and dragging the mouse
 
+Spline Mode
+
+	* add control points: shift + click
+	* delete control points: shift + ctrl + click
+	* press A to change the add (and delete) mode
+		+ bounds: add (and delete) control points only to start and end control points
+		+ inbetween: add (and delete) control points between control points
 
 Gravity
 
 	* paint prefabs, as describe in General
-	* click "Add Rigidbody"
-	* hit play mode
-	* when gravity is applied, click "Copy Transforms"
-	* exit play mode
-	* hit Apply Copied Transforms
-	* click Remove Rigidbody
+	* hit "Run Simulation" in the Physics Settings
 	
 Delete
 
 	* Click "Remove Container Children" to quickly remove the children of the current container
-	
-Input
--------------------------------------------------
-
-Precondition: gameobject with PrefabPainterEditor script must be selected
-
-	* ctrl + mouse wheel: adjust the radius
-	* mouse drag: instantiate gameobjects
 
 	
 
