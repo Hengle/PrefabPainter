@@ -8,23 +8,18 @@ namespace PrefabPainter
 {
     public class SplineModuleEditor
     {
-        private enum ADD_MODE
-        {
-            Bounds,
-            Inbetween
-        }
 
-        private static int maxCurveResolution = 10;
+        private static readonly int maxCurveResolution = 10;
+        PrefabPainterEditor editor;
         PrefabPainter gizmo;
 
         private bool mousePosValid = false;
         private Vector3 mousePos;
 
-        private ADD_MODE addMode = ADD_MODE.Bounds;
-
-        public SplineModuleEditor(PrefabPainter gizmo)
+        public SplineModuleEditor(PrefabPainterEditor editor)
         {
-            this.gizmo = gizmo;
+            this.editor = editor;
+            this.gizmo = editor.GetPainter();
         }
 
         public void OnInspectorGUI()
@@ -33,27 +28,41 @@ namespace PrefabPainter
 
             EditorGUILayout.LabelField("Spline settings", GUIStyles.BoxTitleStyle);
 
+            EditorGUI.BeginChangeCheck();
+
             this.gizmo.splineSettings.curveResolution = EditorGUILayout.IntSlider("Curve Resolution", this.gizmo.splineSettings.curveResolution, 0, maxCurveResolution);
             this.gizmo.splineSettings.loop = EditorGUILayout.Toggle("Loop", this.gizmo.splineSettings.loop);
             this.gizmo.splineSettings.distanceBetweenObjects = EditorGUILayout.FloatField("Distance between Objects", this.gizmo.splineSettings.distanceBetweenObjects);
-            this.gizmo.splineSettings.rotateInstance = EditorGUILayout.Toggle("Rotate Objects", this.gizmo.splineSettings.rotateInstance);
+            this.gizmo.splineSettings.instanceRotation = (SplineSettings.Rotation)EditorGUILayout.EnumPopup("Rotation", this.gizmo.splineSettings.instanceRotation);
+            this.gizmo.splineSettings.attachMode = (SplineSettings.AttachMode)EditorGUILayout.EnumPopup("Attach Mode", this.gizmo.splineSettings.attachMode);
 
-            if (GUILayout.Button("Place Objects"))
+            bool changed = EditorGUI.EndChangeCheck();
+            this.gizmo.splineSettings.dirty |= changed;
+
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("New"))
             {
-                gizmo.splineModule.PlaceObjects();
+                ClearSpline(false);
             }
 
-            if (GUILayout.Button("Clear Spline"))
+            if (GUILayout.Button("Clear"))
             {
-                ClearSpline( true);
+                ClearSpline(true);
             }
 
-            if (GUILayout.Button("New Spline"))
+            if (GUILayout.Button("Update"))
             {
-                ClearSpline( false);
+                gizmo.splineSettings.dirty |= true;
+                DrawPrefabs(); // TODO: draw later at a core place
             }
+
+
+            GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
+
+            DrawPrefabs();
         }
 
         // About the position hanlde see example https://docs.unity3d.com/ScriptReference/Handles.PositionHandle.html
@@ -71,9 +80,8 @@ namespace PrefabPainter
                 mousePos = hit.point;
                 mousePosValid = true;
 
-
                 ///
-                /// process mouse events
+                /// process mouse & keyboard events
                 ///
 
                 //if (EditorWindow.focusedWindow)
@@ -83,14 +91,19 @@ namespace PrefabPainter
                     {
                         case EventType.KeyDown:
                             {
-                                if (Event.current.keyCode == KeyCode.A)
+                                // toggle add mode
+                                if (Event.current.shift && Event.current.keyCode == KeyCode.A)
                                 {
                                     // toggle add mode
-                                    if ( addMode == ADD_MODE.Bounds)
-                                        addMode = ADD_MODE.Inbetween;
+                                    if (gizmo.splineSettings.attachMode == SplineSettings.AttachMode.Bounds)
+                                        gizmo.splineSettings.attachMode = SplineSettings.AttachMode.Between;
                                     else
-                                        addMode = ADD_MODE.Bounds;
-                                }
+                                        gizmo.splineSettings.attachMode = SplineSettings.AttachMode.Bounds;
+
+                                    // trigger repaint, so that the enumpopup will be updated
+                                    editor.Repaint();
+                                 };
+
                                 break;
                             }
                     }
@@ -147,7 +160,7 @@ namespace PrefabPainter
                                 neighbourIndex = addControlPointIndex + 1;
                             }
 
-                            if (addMode == ADD_MODE.Inbetween && neighbourIndex >= 0 && neighbourIndex <= gizmo.splineSettings.controlPoints.Count - 1)
+                            if (gizmo.splineSettings.attachMode == SplineSettings.AttachMode.Between && neighbourIndex >= 0 && neighbourIndex <= gizmo.splineSettings.controlPoints.Count - 1)
                             {
 
                                 Vector3 neighbourLineStartPosition = gizmo.splineSettings.controlPoints.ElementAt(neighbourIndex).position;
@@ -209,34 +222,47 @@ namespace PrefabPainter
                 HandleUtility.AddDefaultControl(controlId);
             }
 
-            // TODO: that's performance intense
-            placeObjectsOnSpline();
+            DrawSplineGizmos();
+
+            // create gameobjects
+            if( mousePosValid)
+            {
+                DrawPrefabs();
+            }
+            
 
             // show info
             Handles.BeginGUI();
 
-            string[] info = new string[] { "Add Control Point: shift + click", "Remove control point: shift + ctrl + click", "Change Add Mode: A, Current Add Mode: " + addMode};
+            string[] info = new string[] { "Add Control Point: shift + click", "Remove control point: shift + ctrl + click", "Change Attach Mode: shift + A, Current: " + gizmo.splineSettings.attachMode };
             PrefabPainterEditor.ShowGuiInfo(info);
 
             Handles.EndGUI();
         }
 
-        private void placeObjectsOnSpline()
+        private void DrawPrefabs()
         {
-//            if (gizmo.splineSettings.controlPoints.Count < 2)
-//                return;
+            if (!gizmo.splineSettings.dirty)
+                return;
+
+            gizmo.splineModule.PlaceObjects();
+
+            gizmo.splineSettings.dirty = false;
+        }
+
+        private void DrawSplineGizmos()
+        {
 
             bool nodesChanged = false;
 
-            // position handles
-            foreach (Transform transform in gizmo.splineSettings.controlPoints)
+            // dizmos
+            foreach (ControlPoint controlPoint in gizmo.splineSettings.controlPoints)
             {
-                if (transform == null)
-                    continue;
 
-                Vector3 oldPosition = transform.position;
+                // position handles
+                Vector3 oldPosition = controlPoint.position;
                 Vector3 newPosition = Handles.PositionHandle(oldPosition, Quaternion.identity);
-                transform.position = newPosition;
+                controlPoint.position = newPosition;
 
                 /* rotation not used yet
                 Quaternion oldRotation = transform.rotation;
@@ -251,14 +277,7 @@ namespace PrefabPainter
 
             }
 
-            // Debug.Log("Nodes changed: " + nodesChanged);
-
-            // create objects
-            // if( nodesChanged)
-            {
-                gizmo.splineModule.PlaceObjects();
-            }
-            
+            gizmo.splineSettings.dirty |= nodesChanged;
         }
 
         private int FindClosestControlPoint(Vector3 position)
@@ -270,14 +289,14 @@ namespace PrefabPainter
             {
 
                 // bounds mode: skip all that aren't bounds
-                if( addMode == ADD_MODE.Bounds)
+                if(gizmo.splineSettings.attachMode == SplineSettings.AttachMode.Bounds)
                 {
                     if (i != 0 && i != gizmo.splineSettings.controlPoints.Count - 1)
                         continue;
                 }
 
-                Transform transform = gizmo.splineSettings.controlPoints.ElementAt(i);
-                float distance = Vector3.Distance(transform.position, position);
+                ControlPoint controlPoint = gizmo.splineSettings.controlPoints.ElementAt(i);
+                float distance = Vector3.Distance(controlPoint.position, position);
 
                 if (i == 0 || distance < smallestDistance)
                 {
@@ -335,42 +354,40 @@ namespace PrefabPainter
 
         private void AddControlPoint( Vector3 position, int closestControlPointIndex)
         {
-            // create control point gameobject
-            GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.position = position;
-            sphere.SetActive(false);
-            sphere.name = "Anchor " + (gizmo.splineSettings.controlPoints.Count + 1);
+            // create control point
+            ControlPoint controlPoint = new ControlPoint();
+            controlPoint.position = position;
 
             // LogControlPoints();
 
             // no control points yet
             if (closestControlPointIndex == -1)
             {
-                gizmo.splineSettings.controlPoints.Add( sphere.transform);
+                gizmo.splineSettings.controlPoints.Add(controlPoint);
             }
             // first control point: insert before
             else if (closestControlPointIndex == 0)
             {
-                switch (addMode)
+                switch (gizmo.splineSettings.attachMode)
                 {
-                    case ADD_MODE.Bounds:
-                        gizmo.splineSettings.controlPoints.Insert(0, sphere.transform);
+                    case SplineSettings.AttachMode.Bounds:
+                        gizmo.splineSettings.controlPoints.Insert(0, controlPoint);
                         break;
-                    case ADD_MODE.Inbetween:
-                        gizmo.splineSettings.controlPoints.Insert(1, sphere.transform);
+                    case SplineSettings.AttachMode.Between:
+                        gizmo.splineSettings.controlPoints.Insert(1, controlPoint);
                         break;
                 }
             }
             // last control point: add after
             else if (closestControlPointIndex == gizmo.splineSettings.controlPoints.Count - 1)
             {
-                switch (addMode)
+                switch (gizmo.splineSettings.attachMode)
                 {
-                    case ADD_MODE.Bounds:
-                        gizmo.splineSettings.controlPoints.Add(sphere.transform);
+                    case SplineSettings.AttachMode.Bounds:
+                        gizmo.splineSettings.controlPoints.Add(controlPoint);
                         break;
-                    case ADD_MODE.Inbetween:
-                        gizmo.splineSettings.controlPoints.Insert(gizmo.splineSettings.controlPoints.Count - 1, sphere.transform);
+                    case SplineSettings.AttachMode.Between:
+                        gizmo.splineSettings.controlPoints.Insert(gizmo.splineSettings.controlPoints.Count - 1, controlPoint);
                         break;
                 }
             }
@@ -378,42 +395,29 @@ namespace PrefabPainter
             else
             {
                 int newControlPointIndex = closestControlPointIndex;
-                gizmo.splineSettings.controlPoints.Insert(newControlPointIndex, sphere.transform);
+                gizmo.splineSettings.controlPoints.Insert(newControlPointIndex, controlPoint);
             }
 
-            // reparent the anchors with the prefab painter gameobject
-            sphere.transform.parent = gizmo.transform;
-        }
+            // trigger recreation of gameobjects
+            gizmo.splineSettings.dirty |= true;
+            DrawPrefabs(); // TODO: draw later at a core place
 
-        private void LogControlPoints()
-        {
-            Debug.Log("Control Points:");
-            for (int i = 0; i < gizmo.splineSettings.controlPoints.Count; i++)
-            {
-                Transform t = gizmo.splineSettings.controlPoints[i];
-                Debug.Log("Control Point " + i + ":" + t.name);
-            }
         }
 
         private void RemoveControlPoint( int index)
         {
-            Transform controlPoint = gizmo.splineSettings.controlPoints.ElementAt(index);
-
-            GameObject parentGameObject = controlPoint.gameObject;
-            PrefabPainter.DestroyImmediate(parentGameObject);
-
             gizmo.splineSettings.controlPoints.RemoveAt(index);
+
+            // trigger recreation of gameobjects
+            gizmo.splineSettings.dirty |= true;
+            DrawPrefabs(); // TODO: draw later at a core place
 
         }
 
         private void ClearSpline( bool removePrefabInstances)
         {
-            foreach (Transform transform in gizmo.splineSettings.controlPoints)
-            {
 
-                GameObject parentGameObject = transform.gameObject;
-                PrefabPainter.DestroyImmediate(parentGameObject);
-            }
+            gizmo.splineSettings.controlPoints.Clear();
 
             if (removePrefabInstances)
             {
@@ -431,6 +435,16 @@ namespace PrefabPainter
 
         }
 
+
+        private void LogControlPoints()
+        {
+            Debug.Log("Control Points:");
+            for (int i = 0; i < gizmo.splineSettings.controlPoints.Count; i++)
+            {
+                ControlPoint controlPoint = gizmo.splineSettings.controlPoints[i];
+                Debug.Log("Control Point " + i + ":" + controlPoint.position);
+            }
+        }
 
     }
 }

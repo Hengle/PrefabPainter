@@ -23,8 +23,9 @@ namespace PrefabPainter
             Vector3[] initialPoints = new Vector3[prefabPainter.splineSettings.controlPoints.Count];
             for (int i = 0; i < prefabPainter.splineSettings.controlPoints.Count; i++)
             {
-                Transform transform = prefabPainter.splineSettings.controlPoints[i];
-                initialPoints[i] = transform.position;
+                ControlPoint controlPoint = prefabPainter.splineSettings.controlPoints[i];
+
+                initialPoints[i] = controlPoint.position;
 
                 Gizmos.DrawSphere(initialPoints[i], 0.15f);
             }
@@ -33,11 +34,11 @@ namespace PrefabPainter
                 return;
 
 
-            IEnumerable<Vector3> spline = Interpolate.NewCatmullRom(prefabPainter.splineSettings.controlPoints.ToArray(), prefabPainter.splineSettings.curveResolution, prefabPainter.splineSettings.loop);
+            IEnumerable<Vector3> spline = InterpolateExt.NewCatmullRom(prefabPainter.splineSettings.controlPoints.ToArray(), prefabPainter.splineSettings.curveResolution, prefabPainter.splineSettings.loop);
             IEnumerator iterator = spline.GetEnumerator();
             iterator.MoveNext();
             var lastPoint = initialPoints[0];
-
+             
             while (iterator.MoveNext())
             {
                 Gizmos.DrawLine(lastPoint, (Vector3)iterator.Current);
@@ -66,7 +67,7 @@ namespace PrefabPainter
                 return;
 
             // put the spline into a list of Vector3's instead of using the iterator
-            IEnumerable<Vector3> spline = Interpolate.NewCatmullRom(prefabPainter.splineSettings.controlPoints.ToArray(), prefabPainter.splineSettings.curveResolution, prefabPainter.splineSettings.loop);
+            IEnumerable<Vector3> spline = InterpolateExt.NewCatmullRom(prefabPainter.splineSettings.controlPoints.ToArray(), prefabPainter.splineSettings.curveResolution, prefabPainter.splineSettings.loop);
             IEnumerator iterator = spline.GetEnumerator();
             List<Vector3> splinePoints = new List<Vector3>();
 
@@ -88,22 +89,13 @@ namespace PrefabPainter
 
             GameObject instance;
             Vector3 direction;
-            Quaternion rotation;
+            Quaternion splineRotation;
 
             // the algorithm skips the first control point, so we need to manually place the first object
             direction = (splinePoints[nextSplinePointIndex] - positionIterator);
-            if (prefabPainter.splineSettings.rotateInstance)
-            {
-                rotation = Quaternion.LookRotation(direction);
-            }
-            else
-            {
-                rotation = Quaternion.identity;
-            }
-
-            instance = GameObject.Instantiate(prefabPainter.prefab, positionIterator, rotation);
-
-            ApplyPrefabSettings(instance);
+            splineRotation = Quaternion.LookRotation(direction);
+            instance = GameObject.Instantiate(prefabPainter.prefab, positionIterator, Quaternion.identity);
+            ApplyPrefabSettings(instance, splineRotation);
 
             prefabPainter.splineSettings.prefabInstances.Add(instance);
 
@@ -117,18 +109,9 @@ namespace PrefabPainter
                     positionIterator += direction * distanceToMove;
 
                     // rotation
-                    if (prefabPainter.splineSettings.rotateInstance)
-                    {
-                        rotation = Quaternion.LookRotation(direction);
-                    }
-                    else
-                    {
-                        rotation = Quaternion.identity;
-                    }
-
-                    instance = GameObject.Instantiate(prefabPainter.prefab, positionIterator, rotation);
-
-                    ApplyPrefabSettings(instance);
+                    splineRotation = Quaternion.LookRotation(direction);
+                    instance = GameObject.Instantiate(prefabPainter.prefab, positionIterator, Quaternion.identity);
+                    ApplyPrefabSettings(instance, splineRotation);
 
 
                     prefabPainter.splineSettings.prefabInstances.Add(instance);
@@ -150,10 +133,32 @@ namespace PrefabPainter
             }
         }
 
-        private void ApplyPrefabSettings(GameObject go)
+        private void ApplyPrefabSettings(GameObject go, Quaternion splineRotation)
         {
             go.transform.position += prefabPainter.positionOffset;
 
+            // size
+            if (prefabPainter.randomScale)
+            {
+                go.transform.localScale = Vector3.one * Random.Range(prefabPainter.randomScaleMin, prefabPainter.randomScaleMax);
+            }
+
+            // default: rotation along spline
+            Quaternion rotation = splineRotation;
+
+            if( prefabPainter.splineSettings.instanceRotation == SplineSettings.Rotation.Identity)
+            {
+                rotation = Quaternion.identity;
+            }
+            else if (prefabPainter.splineSettings.instanceRotation == SplineSettings.Rotation.Prefab)
+            {
+                if (prefabPainter.randomRotation)
+                {
+                    rotation = Random.rotation;
+                }
+            }
+                       
+            go.transform.rotation = rotation;
         }
 
     }

@@ -8,12 +8,15 @@ namespace PrefabPainter
 {
     public class ContainerModuleEditor
     {
-
+        #pragma warning disable 0414
+        PrefabPainterEditor editor;
         PrefabPainter gizmo;
-
-        public ContainerModuleEditor(PrefabPainter gizmo)
+        #pragma warning restore 0414
+        
+        public ContainerModuleEditor(PrefabPainterEditor editor)
         {
-            this.gizmo = gizmo;
+            this.editor = editor;
+            this.gizmo = editor.GetPainter();
         }
 
         public void OnInspectorGUI()

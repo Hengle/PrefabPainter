@@ -29,13 +29,18 @@ namespace PrefabPainter
         {
             this.gizmo = target as PrefabPainter;
 
-            this.paintModule = new PaintModuleEditor(this.gizmo);
-            this.splineModule = new SplineModuleEditor(this.gizmo);
-            this.containerModule = new ContainerModuleEditor(this.gizmo);
-            this.physicsModule = new PhysicsExtension(this.gizmo);
-            this.copyPasteModule = new CopyPasteExtension(this.gizmo);
-            this.toolsModule = new ToolsExtension(this.gizmo);
+            this.paintModule = new PaintModuleEditor(this);
+            this.splineModule = new SplineModuleEditor(this);
+            this.containerModule = new ContainerModuleEditor(this);
+            this.physicsModule = new PhysicsExtension(this);
+            this.copyPasteModule = new CopyPasteExtension(this);
+            this.toolsModule = new ToolsExtension(this);
 
+        }
+
+        public PrefabPainter GetPainter()
+        {
+            return this.gizmo;
         }
 
         public override void OnInspectorGUI()

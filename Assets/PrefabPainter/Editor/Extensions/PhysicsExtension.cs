@@ -9,11 +9,16 @@ namespace PrefabPainter
 
     public class PhysicsExtension 
     {
+        #pragma warning disable 0414
+        PrefabPainterEditor editor;
+        #pragma warning restore 0414
+
         PrefabPainter gizmo;
 
-        public PhysicsExtension(PrefabPainter gizmo)
+        public PhysicsExtension(PrefabPainterEditor editor)
         {
-            this.gizmo = gizmo;
+            this.editor = editor;
+            this.gizmo = editor.GetPainter();
 
             if (this.gizmo.physicsSimulation == null)
             {

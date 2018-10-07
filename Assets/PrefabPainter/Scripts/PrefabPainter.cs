@@ -93,6 +93,9 @@ namespace PrefabPainter
 
         void OnEnable()
         {
+            // note: PrefabPainter.PhysicsSimulation must be instantiated using the ScriptableObject.CreateInstance method instead of new PhysicsSimulation.
+            // see PhysicsExtension class. this won't work: physicsSimulation = new PhysicsSimulation();
+
             splineModule = new SplineModule(this);
         }
 

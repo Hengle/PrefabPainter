@@ -362,7 +362,7 @@ namespace PrefabPainter
          * Vector3[] and Transform[] variants. Normally you would not use this
          * function directly.
          */
-        static IEnumerable<Vector3> NewCatmullRom<T>(IList nodes, ToVector3<T> toVector3, int slices, bool loop)
+        protected static IEnumerable<Vector3> NewCatmullRom<T>(IList nodes, ToVector3<T> toVector3, int slices, bool loop)
         {
             // need at least two nodes to spline between
             if (nodes.Count >= 2)

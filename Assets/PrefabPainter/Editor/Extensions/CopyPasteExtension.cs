@@ -8,12 +8,16 @@ namespace PrefabPainter
 {
     public class CopyPasteExtension
     {
+        #pragma warning disable 0414
+        PrefabPainterEditor editor;
+        #pragma warning restore 0414
 
         PrefabPainter gizmo;
 
-        public CopyPasteExtension(PrefabPainter gizmo)
+        public CopyPasteExtension(PrefabPainterEditor editor)
         {
-            this.gizmo = gizmo;
+            this.editor = editor;
+            this.gizmo = editor.GetPainter();
         }
 
         public void OnInspectorGUI()

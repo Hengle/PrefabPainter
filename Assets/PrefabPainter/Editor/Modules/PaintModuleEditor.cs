@@ -8,15 +8,19 @@ namespace PrefabPainter
 {
     public class PaintModuleEditor
     {
+        #pragma warning disable 0414
+        PrefabPainterEditor editor;
+        #pragma warning restore 0414
 
         PrefabPainter gizmo;
 
         private bool mousePosValid = false;
-        private Vector3 mousePos;
+        private Vector3 mousePos; 
 
-        public PaintModuleEditor(PrefabPainter gizmo)
+        public PaintModuleEditor(PrefabPainterEditor editor)
         {
-            this.gizmo = gizmo;
+            this.editor = editor;
+            this.gizmo = editor.GetPainter();
         }
 
         public void OnInspectorGUI()
