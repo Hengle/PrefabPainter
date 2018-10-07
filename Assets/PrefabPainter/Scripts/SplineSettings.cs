@@ -30,5 +30,6 @@ namespace PrefabPainter
 
         public bool dirty = false;
         public AttachMode attachMode = AttachMode.Bounds;
+        public bool controlPointRotation = false;
     }
 }

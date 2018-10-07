@@ -10,6 +10,10 @@ namespace PrefabPainter
     {
 
         private static readonly int maxCurveResolution = 10;
+
+        // avoid endless loop by limiting min distance between objects to a value above 0
+        private static readonly float minDistanceBetweenObjectsd = 0.01f;
+
         PrefabPainterEditor editor;
         PrefabPainter gizmo;
 
@@ -34,9 +38,29 @@ namespace PrefabPainter
             this.gizmo.splineSettings.loop = EditorGUILayout.Toggle("Loop", this.gizmo.splineSettings.loop);
             this.gizmo.splineSettings.distanceBetweenObjects = EditorGUILayout.FloatField("Distance between Objects", this.gizmo.splineSettings.distanceBetweenObjects);
             this.gizmo.splineSettings.instanceRotation = (SplineSettings.Rotation)EditorGUILayout.EnumPopup("Rotation", this.gizmo.splineSettings.instanceRotation);
+
+            // allow control point rotation only in spline rotation mode
+            if (this.gizmo.splineSettings.instanceRotation == SplineSettings.Rotation.Spline)
+            {
+                this.gizmo.splineSettings.controlPointRotation = EditorGUILayout.Toggle("Control Point Rotation", this.gizmo.splineSettings.controlPointRotation);
+            }
+
             this.gizmo.splineSettings.attachMode = (SplineSettings.AttachMode)EditorGUILayout.EnumPopup("Attach Mode", this.gizmo.splineSettings.attachMode);
 
             bool changed = EditorGUI.EndChangeCheck();
+
+            if( changed)
+            {
+                // avoid endless loop by limiting min distance between objects to a value above 0
+                if (this.gizmo.splineSettings.distanceBetweenObjects <= 0)
+                    this.gizmo.splineSettings.distanceBetweenObjects = minDistanceBetweenObjectsd;
+
+                // allow control point rotation only in spline rotation mode
+                if (this.gizmo.splineSettings.instanceRotation != SplineSettings.Rotation.Spline)
+                    this.gizmo.splineSettings.controlPointRotation = false;
+
+            }
+
             this.gizmo.splineSettings.dirty |= changed;
 
             GUILayout.BeginHorizontal();
@@ -261,18 +285,26 @@ namespace PrefabPainter
 
                 // position handles
                 Vector3 oldPosition = controlPoint.position;
-                Vector3 newPosition = Handles.PositionHandle(oldPosition, Quaternion.identity);
+                Vector3 newPosition = Handles.PositionHandle(oldPosition, controlPoint.rotation);
                 controlPoint.position = newPosition;
-
-                /* rotation not used yet
-                Quaternion oldRotation = transform.rotation;
-                Quaternion newRotation = Handles.RotationHandle(oldRotation, newPosition);
-                transform.rotation = newRotation;
-                */
 
                 if (oldPosition != newPosition)
                 {
                     nodesChanged = true;
+                }
+
+                // rotation depends on whether it's enabled or not
+                if (gizmo.splineSettings.controlPointRotation)
+                {
+                    Quaternion oldRotation = controlPoint.rotation;
+                    Quaternion newRotation = Handles.RotationHandle(oldRotation, controlPoint.position);
+                    controlPoint.rotation = newRotation;
+
+                    if (oldRotation != newRotation)
+                    {
+                        nodesChanged = true;
+                    }
+
                 }
 
             }

@@ -42,10 +42,8 @@ Features in future updates
 + lanes: directly on spline, left & right, multiple left & right
 + limit random scale in specific directions
 + limit rotation
-+ rotation along the spline
 + consider prefab dimensions during distribution
 + random distance during distribution
-+ store position/rotation in a list instead of gameobjects as control points
 + wizard to create prefabpainter gameobject and the group container
 
 Credits
