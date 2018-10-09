@@ -158,15 +158,17 @@ namespace PrefabPainter
         }
 
 
-
         /// <summary>
         /// Add a new prefab to the spline
         /// </summary>
         private void AddPrefab( Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
-            GameObject instance = GameObject.Instantiate(prefabPainter.prefab, position, Quaternion.identity);
+            // get settings for the prefab to instantiate
+            PrefabSettings prefabSettings = prefabPainter.GetPrefabSettings();
 
-            ApplyPrefabSettings(instance, position, direction, splinePoints, currentSplinePointIndex);
+            GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+
+            ApplyPrefabSettings(prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
 
             prefabPainter.splineSettings.prefabInstances.Add(instance);
 
@@ -175,15 +177,15 @@ namespace PrefabPainter
 
         }
 
-        private void ApplyPrefabSettings(GameObject go, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
+        private void ApplyPrefabSettings(PrefabSettings prefabSettings, GameObject go, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
-
-            go.transform.position += prefabPainter.positionOffset;
+            
+            go.transform.position += prefabSettings.positionOffset;
 
             // size
-            if (prefabPainter.randomScale)
+            if (prefabSettings.randomScale)
             {
-                go.transform.localScale = Vector3.one * Random.Range(prefabPainter.randomScaleMin, prefabPainter.randomScaleMax);
+                go.transform.localScale = Vector3.one * Random.Range(prefabSettings.randomScaleMin, prefabSettings.randomScaleMax);
             }
 
             // default: rotation along spline
@@ -233,7 +235,7 @@ namespace PrefabPainter
             }
             else if (prefabPainter.splineSettings.instanceRotation == SplineSettings.Rotation.Prefab)
             {
-                if (prefabPainter.randomRotation)
+                if (prefabSettings.randomRotation)
                 {
                     rotation = Random.rotation;
                 }

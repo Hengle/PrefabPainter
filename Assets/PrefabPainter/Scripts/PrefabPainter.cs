@@ -33,40 +33,10 @@ namespace PrefabPainter
         public float brushSize = 2.0f;
 
         /// <summary>
-        /// The prefab which should be instanted and placed at the brush position
+        /// The prefab that will be instantiated
         /// </summary>
         [HideInInspector]
-        public GameObject prefab;
-
-        /// <summary>
-        /// The offset that should be added to the instantiated gameobjects position
-        /// </summary>
-        [HideInInspector]
-        public Vector3 positionOffset;
-
-        /// <summary>
-        /// Randomize rotation
-        /// </summary>
-        [HideInInspector]
-        public bool randomRotation;
-
-        /// <summary>
-        /// Randomize Scale Minimum
-        /// </summary>
-        [HideInInspector]
-        public bool randomScale = false;
-
-        /// <summary>
-        /// Randomize Scale Minimum
-        /// </summary>
-        [HideInInspector]
-        public float randomScaleMin = 0.5f;
-
-        /// <summary>
-        /// Randomize Scale Maximum
-        /// </summary>
-        [HideInInspector]
-        public float randomScaleMax = 1.5f;
+        public List<PrefabSettings> prefabSettingsList;
 
         /// <summary>
         /// Instance of PhysicsSimulation.
@@ -93,15 +63,78 @@ namespace PrefabPainter
 
         void OnEnable()
         {
+            // create initial prefab
+            prefabSettingsList = new List<PrefabSettings>();
+
             // note: PrefabPainter.PhysicsSimulation must be instantiated using the ScriptableObject.CreateInstance method instead of new PhysicsSimulation.
             // see PhysicsExtension class. this won't work: physicsSimulation = new PhysicsSimulation();
 
             splineModule = new SplineModule(this);
+
         }
 
         void OnDrawGizmos()
         {
             splineModule.OnDrawGizmos();
+
+        }
+
+        /// <summary>
+        /// Get a random active prefab setting from the prefab settings list, depending on the probability.
+        /// </summary>
+        /// <returns></returns>
+        public PrefabSettings GetRandomWeightedPrefab()
+        {
+
+            if (prefabSettingsList.Count == 0)
+                return null;
+
+            float weight;
+            float totalSum = 0;
+
+            foreach (var item in prefabSettingsList)
+            {
+                if (!item.active)
+                    continue;
+
+                totalSum += item.probability;
+
+            }
+
+            float random = Random.value;
+            float bound = 0f;
+
+            foreach (var item in prefabSettingsList)
+            {
+                if (!item.active)
+                    continue;
+
+                weight = item.probability;
+
+                if( weight <= 0f)
+                    continue;
+
+                bound += weight / totalSum;
+
+                if (bound >= random)
+                    return item;
+            }
+
+            return null;
+        }
+
+        public PrefabSettings GetPrefabSettings()
+        {
+
+            PrefabSettings selectedItem = GetRandomWeightedPrefab();
+
+            if ( selectedItem == null)
+            {
+                Debug.LogError("No prefab is active! At least 1 prefab must be active. Using first one");
+                selectedItem = prefabSettingsList[0];
+            }
+
+            return selectedItem;
 
         }
     }

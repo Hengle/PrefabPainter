@@ -14,14 +14,27 @@ namespace PrefabPainter
             {
                 if (_boxTitleStyle == null)
                 {
-                    _boxTitleStyle = new GUIStyle("Label")
-                    {
-                        //fontStyle = FontStyle.BoldAndItalic
-                        fontStyle = FontStyle.Italic
-                    };
+                    _boxTitleStyle = new GUIStyle("Label");
+                    _boxTitleStyle.fontStyle = FontStyle.Italic;
                 }
                 return _boxTitleStyle;
             }
         }
+
+        private static GUIStyle _dropAreaStyle;
+        public static GUIStyle DropAreaStyle
+        {
+            get
+            {
+                if (_dropAreaStyle == null)
+                {
+                    _dropAreaStyle = new GUIStyle("box");
+                    _dropAreaStyle.fontStyle = FontStyle.Italic;
+                    _dropAreaStyle.alignment = TextAnchor.MiddleCenter;
+                }
+                return _dropAreaStyle;
+            }
+        }
+
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace PrefabPainter
 {
-    public class PaintModuleEditor
+    public class PaintModuleEditor: ModuleEditorI
     {
         #pragma warning disable 0414
         PrefabPainterEditor editor;
@@ -88,7 +88,7 @@ namespace PrefabPainter
                     // left button = 0; right = 1; middle = 2
                     if (Event.current.button == 0)
                     {
-                        PaintPrefab();
+                        PerformEditorAction();
                         Event.current.Use();
                     }
                 }
@@ -163,8 +163,12 @@ namespace PrefabPainter
         /// <summary>
         /// Check if the distance 
         /// </summary>
-        private void PaintPrefab()
+        private void PerformEditorAction()
         {
+
+            if (!editor.IsEditorSettingsValid())
+                return;
+             
             bool prefabExists = false;
 
             // check if a gameobject is already within the brush size
@@ -185,24 +189,26 @@ namespace PrefabPainter
 
             if (!prefabExists)
             {
+                PrefabSettings prefabSettings = this.gizmo.GetPrefabSettings();
 
-                GameObject instance = PrefabUtility.InstantiatePrefab(gizmo.prefab) as GameObject;
+                // new prefab
+                GameObject instance = PrefabUtility.InstantiatePrefab( prefabSettings.prefab) as GameObject;
 
                 // size
-                if (gizmo.randomScale)
+                if ( prefabSettings.randomScale)
                 {
-                    instance.transform.localScale = Vector3.one * Random.Range(gizmo.randomScaleMin, gizmo.randomScaleMax);
+                    instance.transform.localScale = Vector3.one * Random.Range( prefabSettings.randomScaleMin, prefabSettings.randomScaleMax);
                 }
 
                 // position
                 instance.transform.position = new Vector3(mousePos.x, mousePos.y, mousePos.z);
 
                 // add offset
-                instance.transform.position += gizmo.positionOffset;
+                instance.transform.position +=  prefabSettings.positionOffset;
 
                 // rotation
                 Quaternion rotation;
-                if (gizmo.randomRotation)
+                if ( prefabSettings.randomRotation)
                 {
                     rotation = Random.rotation;
                 }

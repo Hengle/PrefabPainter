@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace PrefabPainter
 {
-    public class SplineModuleEditor
+    public class SplineModuleEditor: ModuleEditorI
     {
 
         private static readonly int maxCurveResolution = 10;
@@ -78,7 +78,7 @@ namespace PrefabPainter
             if (GUILayout.Button("Update"))
             {
                 gizmo.splineSettings.dirty |= true;
-                DrawPrefabs(); // TODO: draw later at a core place
+                PerformEditorAction(); // TODO: draw later at a core place
             }
 
 
@@ -86,7 +86,7 @@ namespace PrefabPainter
 
             GUILayout.EndVertical();
 
-            DrawPrefabs();
+            PerformEditorAction();
         }
 
         // About the position hanlde see example https://docs.unity3d.com/ScriptReference/Handles.PositionHandle.html
@@ -251,7 +251,7 @@ namespace PrefabPainter
             // create gameobjects
             if( mousePosValid)
             {
-                DrawPrefabs();
+                PerformEditorAction();
             }
             
 
@@ -264,8 +264,11 @@ namespace PrefabPainter
             Handles.EndGUI();
         }
 
-        private void DrawPrefabs()
+        private void PerformEditorAction()
         {
+            if (!editor.IsEditorSettingsValid())
+                return;
+
             if (!gizmo.splineSettings.dirty)
                 return;
 
@@ -432,7 +435,7 @@ namespace PrefabPainter
 
             // trigger recreation of gameobjects
             gizmo.splineSettings.dirty |= true;
-            DrawPrefabs(); // TODO: draw later at a core place
+            PerformEditorAction(); // TODO: draw later at a core place
 
         }
 
@@ -442,7 +445,7 @@ namespace PrefabPainter
 
             // trigger recreation of gameobjects
             gizmo.splineSettings.dirty |= true;
-            DrawPrefabs(); // TODO: draw later at a core place
+            PerformEditorAction(); // TODO: draw later at a core place
 
         }
 

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace PrefabPainter
 {
-    public class ContainerModuleEditor
+    public class ContainerModuleEditor: ModuleEditorI
     {
         #pragma warning disable 0414
         PrefabPainterEditor editor;

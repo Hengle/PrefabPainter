@@ -37,14 +37,14 @@ Delete
 
 Features in future updates
 -------------------------------------------------	
-+ multiple prefabs
 + rotation offset
 + lanes: directly on spline, left & right, multiple left & right
 + limit random scale in specific directions
 + limit rotation
-+ consider prefab dimensions during distribution
++ consider prefab dimensions during distribution, align them next to each other
 + random distance during distribution
 + wizard to create prefabpainter gameobject and the group container
++ check if playmode is affected, maybe disable component when Application.isPlaying()
 
 Credits
 -------------------------------------------------

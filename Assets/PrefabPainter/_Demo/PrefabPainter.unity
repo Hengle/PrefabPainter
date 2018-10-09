@@ -158,12 +158,6 @@ MonoBehaviour:
   container: {fileID: 1160956117}
   mode: 1
   brushSize: 2
-  prefab: {fileID: 1500891991828590, guid: 8d06961c7055fbe4d9d9620cfdb319fa, type: 2}
-  positionOffset: {x: 0, y: 1.23, z: 0}
-  randomRotation: 0
-  randomScale: 0
-  randomScaleMin: 0.5
-  randomScaleMax: 1.5
   physicsSimulation: {fileID: 1150588484}
 --- !u!4 &574884259
 Transform:
@@ -503,12 +497,6 @@ MonoBehaviour:
   container: {fileID: 1184859703}
   mode: 0
   brushSize: 2
-  prefab: {fileID: 1242699101873380, guid: 59015672deb3e31468375618280af6ef, type: 2}
-  positionOffset: {x: 0, y: 1.83, z: 0}
-  randomRotation: 1
-  randomScale: 1
-  randomScaleMin: 0.5
-  randomScaleMax: 1.5
   physicsSimulation: {fileID: 389257827}
 --- !u!4 &1840661335
 Transform:
