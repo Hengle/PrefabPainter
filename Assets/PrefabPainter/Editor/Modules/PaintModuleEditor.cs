@@ -8,11 +8,18 @@ namespace PrefabPainter
 {
     public class PaintModuleEditor: ModuleEditorI
     {
+        #region Properties
+
+        SerializedProperty brushSize;
+         
+        #endregion Properties
+
         #pragma warning disable 0414
         PrefabPainterEditor editor;
         #pragma warning restore 0414
-
+         
         PrefabPainter gizmo;
+
 
         private bool mousePosValid = false;
         private Vector3 mousePos; 
@@ -21,6 +28,9 @@ namespace PrefabPainter
         {
             this.editor = editor;
             this.gizmo = editor.GetPainter();
+
+            brushSize = editor.FindProperty( x => x.paintSettings.brushSize);
+
         }
 
         public void OnInspectorGUI()
@@ -29,16 +39,17 @@ namespace PrefabPainter
 
             EditorGUILayout.LabelField("Paint settings", GUIStyles.BoxTitleStyle);
 
-            this.gizmo.brushSize = EditorGUILayout.FloatField("Brush Size", this.gizmo.brushSize);
+            EditorGUILayout.PropertyField(brushSize, new GUIContent("Brush Size"));
 
             GUILayout.EndVertical();
+
         }
 
 
 
         public void OnSceneGUI()
         {
-            float radius = gizmo.brushSize / 2f;
+            float radius = gizmo.paintSettings.brushSize / 2f;
 
             int controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
 
@@ -67,16 +78,16 @@ namespace PrefabPainter
 
                         if (Event.current.delta.y > 0)
                         {
-                            gizmo.brushSize++;
+                            gizmo.paintSettings.brushSize++;
                             Event.current.Use();
                         }
                         else if (Event.current.delta.y < 0)
                         {
-                            gizmo.brushSize--;
+                            gizmo.paintSettings.brushSize--;
 
                             // TODO: slider
-                            if (gizmo.brushSize < 1)
-                                gizmo.brushSize = 1;
+                            if (gizmo.paintSettings.brushSize < 1)
+                                gizmo.paintSettings.brushSize = 1;
 
                             Event.current.Use();
                         }
@@ -179,7 +190,7 @@ namespace PrefabPainter
             {
                 float dist = Vector3.Distance(mousePos, child.transform.position);
 
-                if (dist <= gizmo.brushSize)
+                if (dist <= gizmo.paintSettings.brushSize)
                 {
                     prefabExists = true;
                     break;

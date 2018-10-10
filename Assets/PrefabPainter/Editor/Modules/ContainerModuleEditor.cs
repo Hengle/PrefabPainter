@@ -21,6 +21,7 @@ namespace PrefabPainter
 
         public void OnInspectorGUI()
         {
+
             GUILayout.BeginVertical("box");
 
             EditorGUILayout.LabelField("Container", GUIStyles.BoxTitleStyle);
@@ -28,6 +29,7 @@ namespace PrefabPainter
             EditorGUILayout.HelpBox("Perform operations on the container children", MessageType.Info);
 
             GUILayout.EndVertical();
+
         }
 
         public void OnSceneGUI()

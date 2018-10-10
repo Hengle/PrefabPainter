@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace PrefabPainter
 {
+    [System.Serializable]
     public class SplineSettings
     {
 
@@ -20,16 +21,20 @@ namespace PrefabPainter
             Identity
         }
 
-        public List<GameObject> prefabInstances = new List<GameObject>();
-        public List<ControlPoint> controlPoints = new List<ControlPoint>();
 
+
+        [Range (0,10)]
         public int curveResolution = 0;
         public bool loop = false;
         public float distanceBetweenObjects = 1f;
         public Rotation instanceRotation = Rotation.Prefab;
 
-        public bool dirty = false;
         public AttachMode attachMode = AttachMode.Bounds;
         public bool controlPointRotation = false;
+
+        // internal properties
+        public bool dirty = false;
+        public List<GameObject> prefabInstances = new List<GameObject>();
+        public List<ControlPoint> controlPoints = new List<ControlPoint>();
     }
 }

@@ -8,8 +8,17 @@ namespace PrefabPainter
 {
     public class SplineModuleEditor: ModuleEditorI
     {
+        #region Properties
 
-        private static readonly int maxCurveResolution = 10;
+        SerializedProperty curveResolution;
+        SerializedProperty loop;
+        SerializedProperty distanceBetweenObjects;
+        SerializedProperty instanceRotation;
+        SerializedProperty controlPointRotation;
+        SerializedProperty attachMode;
+        SerializedProperty dirty;
+
+        #endregion Properties
 
         // avoid endless loop by limiting min distance between objects to a value above 0
         private static readonly float minDistanceBetweenObjectsd = 0.01f;
@@ -24,6 +33,16 @@ namespace PrefabPainter
         {
             this.editor = editor;
             this.gizmo = editor.GetPainter();
+
+            curveResolution = editor.FindProperty( x => x.splineSettings.curveResolution);
+            loop = editor.FindProperty(x => x.splineSettings.loop);
+            distanceBetweenObjects = editor.FindProperty(x => x.splineSettings.distanceBetweenObjects);
+            instanceRotation =  editor.FindProperty(x => x.splineSettings.instanceRotation);
+            controlPointRotation =  editor.FindProperty(x => x.splineSettings.controlPointRotation);
+            attachMode = editor.FindProperty(x => x.splineSettings.attachMode);
+
+            dirty =  editor.FindProperty(x => x.splineSettings.dirty);
+
         }
 
         public void OnInspectorGUI()
@@ -34,34 +53,40 @@ namespace PrefabPainter
 
             EditorGUI.BeginChangeCheck();
 
-            this.gizmo.splineSettings.curveResolution = EditorGUILayout.IntSlider("Curve Resolution", this.gizmo.splineSettings.curveResolution, 0, maxCurveResolution);
-            this.gizmo.splineSettings.loop = EditorGUILayout.Toggle("Loop", this.gizmo.splineSettings.loop);
-            this.gizmo.splineSettings.distanceBetweenObjects = EditorGUILayout.FloatField("Distance between Objects", this.gizmo.splineSettings.distanceBetweenObjects);
-            this.gizmo.splineSettings.instanceRotation = (SplineSettings.Rotation)EditorGUILayout.EnumPopup("Rotation", this.gizmo.splineSettings.instanceRotation);
+            EditorGUILayout.PropertyField(curveResolution, new GUIContent("Curve Resolution"));
+            EditorGUILayout.PropertyField(loop, new GUIContent("Loop"));
+            EditorGUILayout.PropertyField(distanceBetweenObjects, new GUIContent("Distance between Objects"));
+            EditorGUILayout.PropertyField(instanceRotation, new GUIContent("Rotation"));
 
             // allow control point rotation only in spline rotation mode
-            if (this.gizmo.splineSettings.instanceRotation == SplineSettings.Rotation.Spline)
+            SplineSettings.Rotation selectedInstanceRotation = (SplineSettings.Rotation)System.Enum.GetValues(typeof(SplineSettings.Rotation)).GetValue(instanceRotation.enumValueIndex);
+
+            if (selectedInstanceRotation == SplineSettings.Rotation.Spline)
             {
-                this.gizmo.splineSettings.controlPointRotation = EditorGUILayout.Toggle("Control Point Rotation", this.gizmo.splineSettings.controlPointRotation);
+                EditorGUILayout.PropertyField(controlPointRotation, new GUIContent("Control Point Rotation"));
             }
 
-            this.gizmo.splineSettings.attachMode = (SplineSettings.AttachMode)EditorGUILayout.EnumPopup("Attach Mode", this.gizmo.splineSettings.attachMode);
+            EditorGUILayout.PropertyField(attachMode, new GUIContent("Attach Mode"));
+
 
             bool changed = EditorGUI.EndChangeCheck();
 
             if( changed)
             {
                 // avoid endless loop by limiting min distance between objects to a value above 0
-                if (this.gizmo.splineSettings.distanceBetweenObjects <= 0)
-                    this.gizmo.splineSettings.distanceBetweenObjects = minDistanceBetweenObjectsd;
+                if( distanceBetweenObjects.floatValue <= 0)
+                    distanceBetweenObjects.floatValue = minDistanceBetweenObjectsd;
+
 
                 // allow control point rotation only in spline rotation mode
-                if (this.gizmo.splineSettings.instanceRotation != SplineSettings.Rotation.Spline)
-                    this.gizmo.splineSettings.controlPointRotation = false;
+                if (selectedInstanceRotation != SplineSettings.Rotation.Spline)
+                {
+                    controlPointRotation.boolValue = false;
+                }
 
             }
 
-            this.gizmo.splineSettings.dirty |= changed;
+            dirty.boolValue |= changed;
 
             GUILayout.BeginHorizontal();
 
@@ -77,7 +102,7 @@ namespace PrefabPainter
 
             if (GUILayout.Button("Update"))
             {
-                gizmo.splineSettings.dirty |= true;
+                dirty.boolValue |= true;
                 PerformEditorAction(); // TODO: draw later at a core place
             }
 
@@ -87,6 +112,7 @@ namespace PrefabPainter
             GUILayout.EndVertical();
 
             PerformEditorAction();
+
         }
 
         // About the position hanlde see example https://docs.unity3d.com/ScriptReference/Handles.PositionHandle.html
@@ -119,7 +145,17 @@ namespace PrefabPainter
                                 if (Event.current.shift && Event.current.keyCode == KeyCode.A)
                                 {
                                     // toggle add mode
-                                    if (gizmo.splineSettings.attachMode == SplineSettings.AttachMode.Bounds)
+                                    
+                                    SplineSettings.AttachMode selectedAttachMode = gizmo.splineSettings.attachMode;
+
+                                    /*
+                                    SplineSettings.AttachMode selectedAttachMode = (SplineSettings.AttachMode)System.Enum.GetValues(typeof(SplineSettings.AttachMode)).GetValue(attachMode.enumValueIndex);
+
+                                    int boundsIndex = ArrayUtility.IndexOf((SplineSettings.AttachMode[])System.Enum.GetValues(typeof(SplineSettings.AttachMode)), SplineSettings.AttachMode.Bounds);
+                                    int betweenIndex = ArrayUtility.IndexOf((SplineSettings.AttachMode[])System.Enum.GetValues(typeof(SplineSettings.AttachMode)), SplineSettings.AttachMode.Between);
+                                    */
+
+                                    if (selectedAttachMode == SplineSettings.AttachMode.Bounds)
                                         gizmo.splineSettings.attachMode = SplineSettings.AttachMode.Between;
                                     else
                                         gizmo.splineSettings.attachMode = SplineSettings.AttachMode.Bounds;

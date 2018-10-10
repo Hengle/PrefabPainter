@@ -12,26 +12,45 @@ namespace PrefabPainter
     [ExecuteInEditMode()]
     [CanEditMultipleObjects]
     [CustomEditor(typeof(PrefabPainter))]
-    public class PrefabPainterEditor : Editor
+    public class PrefabPainterEditor : BaseEditor<PrefabPainter>
     {
+        #region Properties
+
+        SerializedProperty container;
+        SerializedProperty mode;
+
+        #endregion Properties
 
         private PrefabPainter gizmo;
 
         private PhysicsExtension physicsModule;
         private CopyPasteExtension copyPasteModule;
-        private ContainerModuleEditor containerModule;
+        private ToolsExtension toolsModule;
 
+        private ContainerModuleEditor containerModule;
         private PaintModuleEditor paintModule;
         private SplineModuleEditor splineModule;
-        private ToolsExtension toolsModule;
+
+        private PrefabModuleEditor prefabModule;
+
+        PrefabPainterEditor editor;
+
+        // TODO handle prefab dragging only in prefab painter editor
+        public List<PrefabSettings> newDraggedPrefabs = null;
 
         public void OnEnable()
         {
+            this.editor = this;
+
+            container = FindProperty( x => x.container); 
+            mode = FindProperty(x => x.mode);
+
             this.gizmo = target as PrefabPainter;
 
             this.paintModule = new PaintModuleEditor(this);
             this.splineModule = new SplineModuleEditor(this);
             this.containerModule = new ContainerModuleEditor(this);
+            this.prefabModule = new PrefabModuleEditor(this);
             this.physicsModule = new PhysicsExtension(this);
             this.copyPasteModule = new CopyPasteExtension(this);
             this.toolsModule = new ToolsExtension(this);
@@ -46,16 +65,18 @@ namespace PrefabPainter
         public override void OnInspectorGUI()
         {
 
-            List<PrefabSettings> newDraggedPrefabs = null;
+            // Update the serializedProperty - always do this in the beginning of OnInspectorGUI.
+            editor.serializedObject.Update();
+
+            newDraggedPrefabs = null;
 
             // draw default inspector elements
             DrawDefaultInspector();
-
-
+             
             /// 
             /// Version Info
             /// 
-            EditorGUILayout.HelpBox("Prefab Painter v0.2 (Alpha)", MessageType.Info);
+            EditorGUILayout.HelpBox("Prefab Painter v0.3 (Alpha)", MessageType.Info);
 
             /// 
             /// General settings
@@ -66,8 +87,27 @@ namespace PrefabPainter
 
                 EditorGUILayout.LabelField("General Settings", GUIStyles.BoxTitleStyle);
 
-                this.gizmo.container = (GameObject)EditorGUILayout.ObjectField("Container", this.gizmo.container, typeof(GameObject), true);
-                this.gizmo.mode = (PrefabPainter.Mode)EditorGUILayout.EnumPopup("Mode", this.gizmo.mode);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.PrefixLabel("");
+                EditorGUILayout.PropertyField(container);
+                
+                if (GUILayout.Button("New", EditorStyles.miniButton, GUILayout.Width(40)))
+                {
+                    GameObject newContainer = new GameObject();
+
+                    string name = "Container" + " (" + (this.gizmo.transform.childCount + 1) + ")";
+                    newContainer.name = name;
+
+                    // set parent; reset position & rotation
+                    newContainer.transform.SetParent( this.gizmo.transform, false);
+
+                    // set as new value
+                    container.objectReferenceValue = newContainer;
+
+                }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.PropertyField(mode, new GUIContent("Mode"));
 
             }
             GUILayout.EndVertical();
@@ -96,160 +136,8 @@ namespace PrefabPainter
                     
             }
 
-            /// 
-            /// Prefab
-            /// 
-
-            GUILayout.BeginVertical("box");
-            {
-
-                EditorGUILayout.LabelField("Prefab", GUIStyles.BoxTitleStyle);
-
-                GUILayout.BeginHorizontal();
-                {
-
-                    GUILayout.BeginVertical();
-                    {
-
-                        // drop area
-                        Rect prefabDropArea = GUILayoutUtility.GetRect(0.0f, 24.0f, GUIStyles.DropAreaStyle, GUILayout.ExpandWidth(true) );
-                        GUI.Box(prefabDropArea, "Drop prefabs here in order to use them", GUIStyles.DropAreaStyle);
-                        
-
-                        Event evt = Event.current;
-                        switch (evt.type)
-                        {
-                            case EventType.DragUpdated:
-                            case EventType.DragPerform:
-                                 
-                                if (prefabDropArea.Contains(evt.mousePosition))
-                                {
-
-                                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-
-                                    if (evt.type == EventType.DragPerform)
-                                    {
-                                        DragAndDrop.AcceptDrag();
-
-                                        // list of new prefabs that should be created via drag/drop
-                                        // we can't do it in the drag/drop code itself, we'd get exceptions like
-                                        //   ArgumentException: Getting control 12's position in a group with only 12 controls when doing dragPerform. Aborting
-                                        // followed by
-                                        //   Unexpected top level layout group! Missing GUILayout.EndScrollView/EndVertical/EndHorizontal? UnityEngine.GUIUtility:ProcessEvent(Int32, IntPtr)
-                                        // they must be added when everything is done (currently at the end of this method)
-                                        newDraggedPrefabs = new List<PrefabSettings>();
-
-                                        foreach (Object droppedObject in DragAndDrop.objectReferences)
-                                        {
-
-                                            // allow only prefabs
-                                            if (PrefabUtility.GetPrefabType(droppedObject) == PrefabType.None)
-                                            {
-                                                Debug.Log("Not a gameobject: " + droppedObject);
-                                                continue;
-                                            }
-
-                                            // new settings
-                                            PrefabSettings prefabSettings = new PrefabSettings();
-
-                                            // initialize with dropped prefab
-                                            prefabSettings.prefab = droppedObject as GameObject;
-
-                                            newDraggedPrefabs.Add(prefabSettings);
-
-                                        }
-                                    }
-                                }
-                                break;
-                        }
-
-                    }
-
-                    GUILayout.EndVertical();
-
-                }
-
-                GUILayout.EndHorizontal();
-
-
-                for (int i = 0; i < gizmo.prefabSettingsList.Count; i++)
-                {
-                    if (i > 0)
-                        addGUISeparator();
-
-                    PrefabSettings prefabSettings = this.gizmo.prefabSettingsList[i];
-
-                    GUILayout.BeginHorizontal();
-                    {
-                        // preview
-                        // try to get the asset preview
-                        Texture2D previewTexture = AssetPreview.GetAssetPreview(prefabSettings.prefab);
-                        // if no asset preview available, try to get the mini thumbnail
-                        if (!previewTexture)
-                        {
-                            previewTexture = AssetPreview.GetMiniThumbnail(prefabSettings.prefab);
-                        }
-                        // if a preview is available, paint it
-                        if (previewTexture)
-                        {
-                            //GUILayout.Label(previewTexture, EditorStyles.objectFieldThumb, GUILayout.Width(50), GUILayout.Height(50)); // without border, but with size
-                            GUILayout.Label(previewTexture, GUILayout.Width(50), GUILayout.Height(50)); // without border, but with size
-
-                            //GUILayout.Box(previewTexture); // with border
-                            //GUILayout.Label(previewTexture); // no border
-                            //GUILayout.Box(previewTexture, GUILayout.Width(50), GUILayout.Height(50)); // with border and size
-                            //EditorGUI.DrawPreviewTexture(new Rect(25, 60, 100, 100), previewTexture); // draws it in absolute coordinates
-
-                        }
-
-                        // right alin the buttons
-                        GUILayout.FlexibleSpace();
-
-                        if (GUILayout.Button("Add", EditorStyles.miniButton))
-                        {
-                            this.gizmo.prefabSettingsList.Insert(i + 1, new PrefabSettings());
-                        }
-                        if (GUILayout.Button("Duplicate", EditorStyles.miniButton))
-                        {
-                            PrefabSettings newPrefabSettings = prefabSettings.Clone();
-                            this.gizmo.prefabSettingsList.Insert(i + 1, newPrefabSettings);
-                        }
-                        if (GUILayout.Button("Reset", EditorStyles.miniButton))
-                        {
-                            // remove existing
-                            this.gizmo.prefabSettingsList.RemoveAt(i);
-
-                            // add new
-                            this.gizmo.prefabSettingsList.Insert(i, new PrefabSettings());
-
-                        }
-                        if (GUILayout.Button("Remove", EditorStyles.miniButton))
-                        {
-                            this.gizmo.prefabSettingsList.Remove(prefabSettings);
-                        }
-
-                    }
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.Space(4);
-
-                    prefabSettings.prefab = (GameObject)EditorGUILayout.ObjectField("Prefab", prefabSettings.prefab, typeof(GameObject), true);
-
-                    prefabSettings.active = EditorGUILayout.Toggle("Active", prefabSettings.active);
-                    prefabSettings.probability = EditorGUILayout.Slider("Probability", prefabSettings.probability, 0, 1);
-
-                    prefabSettings.positionOffset = EditorGUILayout.Vector3Field("Position Offset", prefabSettings.positionOffset);
-
-                    prefabSettings.randomRotation = EditorGUILayout.Toggle("Random Rotation", prefabSettings.randomRotation);
-                    prefabSettings.randomScale = EditorGUILayout.Toggle("Random Scale", prefabSettings.randomScale);
-
-                    prefabSettings.randomScaleMin = EditorGUILayout.FloatField("Random Scale Min", prefabSettings.randomScaleMin);
-                    prefabSettings.randomScaleMax = EditorGUILayout.FloatField("Random Scale Max", prefabSettings.randomScaleMax);
-
-                }
-            }
-
-            GUILayout.EndVertical();
+            /// Prefabs
+            this.prefabModule.OnInspectorGUI();
 
             /// Physics
             this.physicsModule.OnInspectorGUI();
@@ -265,12 +153,13 @@ namespace PrefabPainter
             {
                 this.gizmo.prefabSettingsList.AddRange(newDraggedPrefabs);
             }
-            
 
+            // Apply changes to the serializedProperty - always do this in the end of OnInspectorGUI.
+            editor.serializedObject.ApplyModifiedProperties();
         }
 
 
-        private void addGUISeparator()
+        public void addGUISeparator()
         {
             // space
             GUILayout.Space(10);

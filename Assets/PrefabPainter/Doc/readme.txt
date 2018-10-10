@@ -46,6 +46,7 @@ Features in future updates
 + wizard to create prefabpainter gameobject and the group container
 + check if playmode is affected, maybe disable component when Application.isPlaying()
 
+
 Credits
 -------------------------------------------------
 
@@ -66,3 +67,9 @@ Credits
 
   Interpolate.cs
   http://wiki.unity3d.com/index.php?title=Interpolate#Interpolate.cs
+
+- Unity
+
+  Getting the SerializedProperty from an object instead of a string. See example:
+  https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Editor/PostProcessVolumeEditor.cs
+

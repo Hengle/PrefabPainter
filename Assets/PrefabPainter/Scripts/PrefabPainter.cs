@@ -20,7 +20,7 @@ namespace PrefabPainter
         /// <summary>
         /// The parent of the instantiated prefabs 
         /// </summary>
-        [HideInInspector]
+        [HideInInspector] 
         public GameObject container;
 
         [HideInInspector]
@@ -30,13 +30,13 @@ namespace PrefabPainter
         /// The diameter of the brush
         /// </summary>
         [HideInInspector]
-        public float brushSize = 2.0f;
+        public PaintSettings paintSettings = new PaintSettings();
 
         /// <summary>
         /// The prefab that will be instantiated
         /// </summary>
         [HideInInspector]
-        public List<PrefabSettings> prefabSettingsList;
+        public List<PrefabSettings> prefabSettingsList = new List<PrefabSettings>();
 
         /// <summary>
         /// Instance of PhysicsSimulation.
@@ -58,23 +58,17 @@ namespace PrefabPainter
         [HideInInspector]
         public SplineSettings splineSettings = new SplineSettings();
 
-
+        /// <summary>
+        /// Spline module
+        /// </summary>
         public SplineModule splineModule = null;
-
-        void OnEnable()
-        {
-            // create initial prefab
-            prefabSettingsList = new List<PrefabSettings>();
-
-            // note: PrefabPainter.PhysicsSimulation must be instantiated using the ScriptableObject.CreateInstance method instead of new PhysicsSimulation.
-            // see PhysicsExtension class. this won't work: physicsSimulation = new PhysicsSimulation();
-
-            splineModule = new SplineModule(this);
-
-        }
 
         void OnDrawGizmos()
         {
+             if ( splineModule == null)
+            {
+                splineModule = new SplineModule(this);
+            }
             splineModule.OnDrawGizmos();
 
         }
