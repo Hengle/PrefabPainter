@@ -26,11 +26,17 @@ namespace PrefabPainter
         [Range (0,10)]
         public int curveResolution = 0;
         public bool loop = false;
+        
         public float distanceBetweenObjects = 1f;
         public Rotation instanceRotation = Rotation.Prefab;
 
         public AttachMode attachMode = AttachMode.Bounds;
         public bool controlPointRotation = false;
+
+        [Range (1,10)]
+        public int lanes = 1;
+        public float laneDistance = 1;
+        public bool skipCenterLane = false;
 
         // internal properties
         public bool dirty = false;

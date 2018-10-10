@@ -45,6 +45,7 @@ Features in future updates
 + random distance during distribution
 + wizard to create prefabpainter gameobject and the group container
 + check if playmode is affected, maybe disable component when Application.isPlaying()
++ prefabmodule: serializedproperty in list
 
 
 Credits

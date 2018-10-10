@@ -13,6 +13,9 @@ namespace PrefabPainter
         SerializedProperty curveResolution;
         SerializedProperty loop;
         SerializedProperty distanceBetweenObjects;
+        SerializedProperty lanes;
+        SerializedProperty laneDistance;
+        SerializedProperty skipCenterLane;
         SerializedProperty instanceRotation;
         SerializedProperty controlPointRotation;
         SerializedProperty attachMode;
@@ -37,7 +40,12 @@ namespace PrefabPainter
             curveResolution = editor.FindProperty( x => x.splineSettings.curveResolution);
             loop = editor.FindProperty(x => x.splineSettings.loop);
             distanceBetweenObjects = editor.FindProperty(x => x.splineSettings.distanceBetweenObjects);
-            instanceRotation =  editor.FindProperty(x => x.splineSettings.instanceRotation);
+
+            lanes = editor.FindProperty(x => x.splineSettings.lanes);
+            laneDistance = editor.FindProperty(x => x.splineSettings.laneDistance);
+            skipCenterLane = editor.FindProperty(x => x.splineSettings.skipCenterLane);
+
+            instanceRotation = editor.FindProperty(x => x.splineSettings.instanceRotation);
             controlPointRotation =  editor.FindProperty(x => x.splineSettings.controlPointRotation);
             attachMode = editor.FindProperty(x => x.splineSettings.attachMode);
 
@@ -56,6 +64,10 @@ namespace PrefabPainter
             EditorGUILayout.PropertyField(curveResolution, new GUIContent("Curve Resolution"));
             EditorGUILayout.PropertyField(loop, new GUIContent("Loop"));
             EditorGUILayout.PropertyField(distanceBetweenObjects, new GUIContent("Distance between Objects"));
+            EditorGUILayout.PropertyField(lanes, new GUIContent("Lanes"));
+            EditorGUILayout.PropertyField(laneDistance, new GUIContent("Lane Distance"));
+            EditorGUILayout.PropertyField(skipCenterLane, new GUIContent("Skip Center Lane"));
+
             EditorGUILayout.PropertyField(instanceRotation, new GUIContent("Rotation"));
 
             // allow control point rotation only in spline rotation mode

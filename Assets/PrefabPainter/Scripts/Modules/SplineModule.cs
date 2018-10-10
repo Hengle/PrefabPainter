@@ -163,24 +163,58 @@ namespace PrefabPainter
         /// </summary>
         private void AddPrefab( Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
-            // get settings for the prefab to instantiate
-            PrefabSettings prefabSettings = prefabPainter.GetPrefabSettings();
 
-            GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+            // offset for lanes: lanes are from left to right, center is the spline. 
+            // so a spline with 5 lanes has these offset lanes: -2, -1, 0, 1, 2
+            int offsetLane = -prefabPainter.splineSettings.lanes / 2;
 
-            ApplyPrefabSettings(prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
+            for ( var lane=1; lane <= prefabPainter.splineSettings.lanes; lane++)
+            {
 
-            prefabPainter.splineSettings.prefabInstances.Add(instance);
+                // skip center lane if requestred
+                if (prefabPainter.splineSettings.skipCenterLane && offsetLane == 0)
+                {
+                    offsetLane++;
+                    continue;
+                }
 
-            // reparent the child to the container
-            instance.transform.parent = prefabPainter.container.transform;
+                // get settings for the prefab to instantiate
+                PrefabSettings prefabSettings = prefabPainter.GetPrefabSettings();
+
+                GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+
+                ApplyPrefabSettings( offsetLane, prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
+
+                prefabPainter.splineSettings.prefabInstances.Add(instance);
+
+                // reparent the child to the container
+                instance.transform.parent = prefabPainter.container.transform;
+
+                offsetLane++;
+            }
 
         }
 
-        private void ApplyPrefabSettings(PrefabSettings prefabSettings, GameObject go, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
+        private void ApplyPrefabSettings( int offsetLane, PrefabSettings prefabSettings, GameObject go, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
-            
+            int lanes = prefabPainter.splineSettings.lanes;
+
+            // add position
             go.transform.position += prefabSettings.positionOffset;
+
+            // lanes
+            Vector3 splinePosition = go.transform.position;
+            Quaternion splineRotation = Quaternion.LookRotation(direction);
+
+            // calculate offset distance to spline
+            float offsetDistance = offsetLane * prefabPainter.splineSettings.laneDistance;
+
+            // calculate the distance considering the spline direction
+            //Vector3 distance = prefabPainter.splineSettings.lanePositionOffset - go.transform.position;
+            Vector3 addDistanceToDirection = splineRotation * go.transform.right * offsetDistance;
+
+            go.transform.position += addDistanceToDirection;
+
 
             // size
             if (prefabSettings.randomScale)
