@@ -29,10 +29,18 @@ namespace PrefabPainter
         public float probability = 1;
 
         /// <summary>
-        /// The offset that should be added to the instantiated gameobjects position
+        /// The offset that should be added to the instantiated gameobjects position.
+        /// This is useful to correct the position of prefabs. 
+        /// It's also useful in combination with the physics module in order to let e. g. pumpkins fall naturally on the terrain.
         /// </summary>
-        [HideInInspector]
         public Vector3 positionOffset;
+
+        /// <summary>
+        /// The offset that should be added to the instantiated gameobjects rotation.
+        /// This is useful to correct the rotation of prefabs.
+        /// The offset is Vector3, uses Eulers.
+        /// </summary>
+        public Vector3 rotationOffset;
 
         /// <summary>
         /// Randomize rotation
@@ -44,19 +52,19 @@ namespace PrefabPainter
         /// Randomize Scale Minimum
         /// </summary>
         [HideInInspector]
-        public bool randomScale = false;
+        public bool changeScale = false;
 
         /// <summary>
         /// Randomize Scale Minimum
         /// </summary>
         [HideInInspector]
-        public float randomScaleMin = 0.5f;
+        public float scaleMin = 0.5f;
 
         /// <summary>
         /// Randomize Scale Maximum
         /// </summary>
         [HideInInspector]
-        public float randomScaleMax = 1.5f;
+        public float scaleMax = 1.5f;
 
 
         public PrefabSettings Clone()

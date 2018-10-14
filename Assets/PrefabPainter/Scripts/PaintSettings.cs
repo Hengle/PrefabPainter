@@ -8,6 +8,7 @@ namespace PrefabPainter
     public class PaintSettings
     {
         public float brushSize = 2.0f;
+        public bool alignToTerrain = false;
 
     }
 }

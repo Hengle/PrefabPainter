@@ -124,8 +124,8 @@ namespace PrefabPainter
 
             if ( selectedItem == null)
             {
-                Debug.LogError("No prefab is active! At least 1 prefab must be active. Using first one");
-                selectedItem = prefabSettingsList[0];
+                Debug.LogError("No prefab is active! At least 1 prefab must be active.");
+                return null;
             }
 
             return selectedItem;

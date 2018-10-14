@@ -11,7 +11,8 @@ namespace PrefabPainter
         #region Properties
 
         SerializedProperty brushSize;
-         
+        SerializedProperty alignToTerrain;
+
         #endregion Properties
 
         #pragma warning disable 0414
@@ -30,6 +31,7 @@ namespace PrefabPainter
             this.gizmo = editor.GetPainter();
 
             brushSize = editor.FindProperty( x => x.paintSettings.brushSize);
+            alignToTerrain = editor.FindProperty(x => x.paintSettings.alignToTerrain);
 
         }
 
@@ -40,6 +42,7 @@ namespace PrefabPainter
             EditorGUILayout.LabelField("Paint settings", GUIStyles.BoxTitleStyle);
 
             EditorGUILayout.PropertyField(brushSize, new GUIContent("Brush Size"));
+            EditorGUILayout.PropertyField(alignToTerrain, new GUIContent("Align To Terrain"));
 
             GUILayout.EndVertical();
 
@@ -56,6 +59,8 @@ namespace PrefabPainter
             Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
             RaycastHit hit;
 
+            // TODO: raycast hit against layer
+            //       see https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
             if (Physics.Raycast(ray.origin, ray.direction, out hit, Mathf.Infinity))
             {
                 mousePos = hit.point;
@@ -99,7 +104,7 @@ namespace PrefabPainter
                     // left button = 0; right = 1; middle = 2
                     if (Event.current.button == 0)
                     {
-                        PerformEditorAction();
+                        PerformEditorAction(hit);
                         Event.current.Use();
                     }
                 }
@@ -121,37 +126,11 @@ namespace PrefabPainter
 
             ShowHandleInfo();
 
-            string[] info = new string[] { "Use ctrl + mousewheel to adjust the brush size\nPress left mouse button and drag to paint prefabs" ,"Children: " + GetChildCount() };
+            string[] info = new string[] { "Use ctrl + mousewheel to adjust the brush size\nPress left mouse button and drag to paint prefabs" ,"Children: " + editor.getContainerChildren().Length };
             PrefabPainterEditor.ShowGuiInfo(info);
 
             Handles.EndGUI();
         }
-
-        #region Common methods
-
-
-        // TODO: refactor into dedicated class
-        private int GetChildCount()
-        {
-            if (gizmo.container == null)
-                return 0;
-
-            return gizmo.container.transform.childCount;
-
-        }
-
-
-        private Transform[] getContainerChildren()
-        {
-            if (gizmo.container == null)
-                return new Transform[0];
-
-            Transform[] children = gizmo.container.transform.Cast<Transform>().ToArray();
-
-            return children;
-        }
-
-        #endregion Common methods
 
         private void ShowHandleInfo()
         {
@@ -164,7 +143,7 @@ namespace PrefabPainter
             style.normal.textColor = Color.blue;
             string text = "Mouse Postion: " + mousePos;
             text += "\n";
-            text += "Children: " + GetChildCount();
+            text += "Children: " + editor.getContainerChildren().Length;
             Handles.Label(mousePos, text, style);
         }
 
@@ -174,7 +153,7 @@ namespace PrefabPainter
         /// <summary>
         /// Check if the distance 
         /// </summary>
-        private void PerformEditorAction()
+        private void PerformEditorAction(RaycastHit hit)
         {
 
             if (!editor.IsEditorSettingsValid())
@@ -206,9 +185,9 @@ namespace PrefabPainter
                 GameObject instance = PrefabUtility.InstantiatePrefab( prefabSettings.prefab) as GameObject;
 
                 // size
-                if ( prefabSettings.randomScale)
+                if ( prefabSettings.changeScale)
                 {
-                    instance.transform.localScale = Vector3.one * Random.Range( prefabSettings.randomScaleMin, prefabSettings.randomScaleMax);
+                    instance.transform.localScale = Vector3.one * Random.Range( prefabSettings.scaleMin, prefabSettings.scaleMax);
                 }
 
                 // position
@@ -223,10 +202,16 @@ namespace PrefabPainter
                 {
                     rotation = Random.rotation;
                 }
+                else if( this.gizmo.paintSettings.alignToTerrain)
+                {
+                    rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                }
                 else
                 {
-                    rotation = new Quaternion(0, 0, 0, 0);
+                    rotation = Quaternion.Euler(prefabSettings.rotationOffset);
+                    //rotation = Quaternion.identity;
                 }
+
                 instance.transform.rotation = rotation;
 
                 // attach as child of container

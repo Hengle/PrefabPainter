@@ -19,6 +19,7 @@ namespace PrefabPainter
         SerializedProperty instanceRotation;
         SerializedProperty controlPointRotation;
         SerializedProperty attachMode;
+        SerializedProperty snap;
         SerializedProperty dirty;
 
         #endregion Properties
@@ -49,6 +50,8 @@ namespace PrefabPainter
             controlPointRotation =  editor.FindProperty(x => x.splineSettings.controlPointRotation);
             attachMode = editor.FindProperty(x => x.splineSettings.attachMode);
 
+            snap = editor.FindProperty(x => x.splineSettings.snap);
+
             dirty =  editor.FindProperty(x => x.splineSettings.dirty);
 
         }
@@ -65,8 +68,8 @@ namespace PrefabPainter
             EditorGUILayout.PropertyField(loop, new GUIContent("Loop"));
             EditorGUILayout.PropertyField(distanceBetweenObjects, new GUIContent("Distance between Objects"));
             EditorGUILayout.PropertyField(lanes, new GUIContent("Lanes"));
-            EditorGUILayout.PropertyField(laneDistance, new GUIContent("Lane Distance"));
             EditorGUILayout.PropertyField(skipCenterLane, new GUIContent("Skip Center Lane"));
+            EditorGUILayout.PropertyField(laneDistance, new GUIContent("Lane Distance"));
 
             EditorGUILayout.PropertyField(instanceRotation, new GUIContent("Rotation"));
 
@@ -79,7 +82,7 @@ namespace PrefabPainter
             }
 
             EditorGUILayout.PropertyField(attachMode, new GUIContent("Attach Mode"));
-
+            EditorGUILayout.PropertyField(snap, new GUIContent("Snap", "Snap to the closest vertical object / terrain. Best used for initial alignment."));
 
             bool changed = EditorGUI.EndChangeCheck();
 
@@ -114,8 +117,12 @@ namespace PrefabPainter
 
             if (GUILayout.Button("Update"))
             {
-                dirty.boolValue |= true;
-                PerformEditorAction(); // TODO: draw later at a core place
+                UpdatePrefabs();
+            }
+
+            if (GUILayout.Button("Snap All"))
+            {
+                SnapAll();
             }
 
 
@@ -124,6 +131,15 @@ namespace PrefabPainter
             GUILayout.EndVertical();
 
             PerformEditorAction();
+
+        }
+
+        private void UpdatePrefabs()
+        {
+
+            // TODO: draw later at a core place
+            dirty.boolValue |= true;
+            PerformEditorAction(); 
 
         }
 
@@ -322,6 +338,7 @@ namespace PrefabPainter
 
             gizmo.splineModule.PlaceObjects();
 
+
             gizmo.splineSettings.dirty = false;
         }
 
@@ -341,6 +358,16 @@ namespace PrefabPainter
 
                 if (oldPosition != newPosition)
                 {
+                    // snap single control point to the terrain if its position changed
+                    if (gizmo.splineSettings.snap)
+                    {
+                        RaycastHit hit;
+                        if( getSnapPosition( controlPoint.position, out hit))
+                        {
+                            controlPoint.position.y = hit.point.y; 
+                        }
+                    }
+
                     nodesChanged = true;
                 }
 
@@ -361,6 +388,31 @@ namespace PrefabPainter
             }
 
             gizmo.splineSettings.dirty |= nodesChanged;
+
+            // draw center
+            /*
+            Vector3 center = GetSplineCenter();
+            Handles.RotationHandle(Quaternion.identity, center);
+            */
+        }
+
+        private bool getSnapPosition( Vector3 currentPosition, out RaycastHit raycastHit)
+        {
+
+            // TODO: raycast hit against layer
+            //       see https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
+            if (Physics.Raycast(currentPosition, Vector3.down, out raycastHit, Mathf.Infinity))
+            {
+                // Debug.DrawRay(controlPoint.position, Vector3.down * hit.distance, Color.cyan);
+                return true;
+            }
+            else if (Physics.Raycast(currentPosition, Vector3.up, out raycastHit, Mathf.Infinity))
+            {
+                // Debug.DrawRay(controlPoint.position, Vector3.down * hit.distance, Color.yellow);
+                return true;
+            }
+
+            return false;
         }
 
         private int FindClosestControlPoint(Vector3 position)
@@ -529,5 +581,41 @@ namespace PrefabPainter
             }
         }
 
+        Vector3 GetSplineCenter()
+        {
+            List<ControlPoint> cps = this.gizmo.splineSettings.controlPoints;
+
+            if (cps.Count <= 2)
+            {
+                return Vector3.zero;
+            }
+
+            Bounds bounds = new Bounds(cps[0].position, Vector3.zero);
+
+            for (int i = 1; i < cps.Count; i++)
+            {
+                bounds.Encapsulate(cps[i].position);
+            }
+
+            return bounds.center;
+        }
+
+        /// <summary>
+        /// Snap all in vertical direction
+        /// </summary>
+        private void SnapAll()
+        {
+            for (int i = 0; i < gizmo.splineSettings.controlPoints.Count; i++)
+            {
+                ControlPoint controlPoint = gizmo.splineSettings.controlPoints[i];
+
+                RaycastHit hit;
+                if( getSnapPosition( controlPoint.position, out hit)) {
+                    controlPoint.position.y = hit.point.y;
+                }
+            }
+
+            UpdatePrefabs();
+        }
     }
 }

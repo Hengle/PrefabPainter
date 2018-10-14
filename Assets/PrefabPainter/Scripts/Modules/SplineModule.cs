@@ -181,8 +181,12 @@ namespace PrefabPainter
                 // get settings for the prefab to instantiate
                 PrefabSettings prefabSettings = prefabPainter.GetPrefabSettings();
 
-                GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+                // check if we have settings at all
+                if (prefabSettings == null)
+                    return;
 
+                GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+                
                 ApplyPrefabSettings( offsetLane, prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
 
                 prefabPainter.splineSettings.prefabInstances.Add(instance);
@@ -217,13 +221,29 @@ namespace PrefabPainter
 
 
             // size
-            if (prefabSettings.randomScale)
+            if (prefabSettings.changeScale)
             {
-                go.transform.localScale = Vector3.one * Random.Range(prefabSettings.randomScaleMin, prefabSettings.randomScaleMax);
+                go.transform.localScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
             }
 
-            // default: rotation along spline
-            Quaternion rotation = Quaternion.LookRotation(direction);
+            // initial rotation
+            Quaternion rotation = Quaternion.identity;
+
+            switch(prefabPainter.splineSettings.instanceRotation)
+            {
+                case SplineSettings.Rotation.Spline:
+                    // rotation along spline
+                    rotation = Quaternion.LookRotation(direction);
+                    break;
+
+                case SplineSettings.Rotation.Prefab:
+                    // rotation of the prefab
+                    if (prefabSettings.randomRotation)
+                    {
+                        rotation = Random.rotation;
+                    }
+                    break;
+            }
 
             // lerp rotation between control points along the spline
             if (prefabPainter.splineSettings.controlPointRotation)
@@ -262,20 +282,11 @@ namespace PrefabPainter
                 rotation *= lerpRotation;
 
             }
-
-            if ( prefabPainter.splineSettings.instanceRotation == SplineSettings.Rotation.Identity)
-            {
-                rotation = Quaternion.identity;
-            }
-            else if (prefabPainter.splineSettings.instanceRotation == SplineSettings.Rotation.Prefab)
-            {
-                if (prefabSettings.randomRotation)
-                {
-                    rotation = Random.rotation;
-                }
-            }
                        
             go.transform.rotation = rotation;
+
+            // add prefab rotation offset
+            go.transform.Rotate(prefabSettings.rotationOffset);
         }
 
     }

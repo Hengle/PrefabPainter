@@ -31,11 +31,17 @@ namespace PrefabPainter
 
                     GUILayout.BeginVertical();
                     {
+                        // change background color in case there are no prefabs yet
+                        if (gizmo.prefabSettingsList.Count == 0)
+                        {
+                            editor.SetErrorBackgroundColor();
+                        }
 
                         // drop area
                         Rect prefabDropArea = GUILayoutUtility.GetRect(0.0f, 24.0f, GUIStyles.DropAreaStyle, GUILayout.ExpandWidth(true));
                         GUI.Box(prefabDropArea, "Drop prefabs here in order to use them", GUIStyles.DropAreaStyle);
 
+                        editor.SetDefaultBackgroundColor();
 
                         Event evt = Event.current;
                         switch (evt.type)
@@ -85,6 +91,7 @@ namespace PrefabPainter
                         }
 
                     }
+
 
                     GUILayout.EndVertical();
 
@@ -159,13 +166,21 @@ namespace PrefabPainter
                     prefabSettings.active = EditorGUILayout.Toggle("Active", prefabSettings.active);
                     prefabSettings.probability = EditorGUILayout.Slider("Probability", prefabSettings.probability, 0, 1);
 
+                    // scale
+                    prefabSettings.changeScale = EditorGUILayout.Toggle("Change Scale", prefabSettings.changeScale);
+
+                    if (prefabSettings.changeScale)
+                    {
+                        prefabSettings.scaleMin = EditorGUILayout.FloatField("Scale Min", prefabSettings.scaleMin);
+                        prefabSettings.scaleMax = EditorGUILayout.FloatField("Scale Max", prefabSettings.scaleMax);
+                    }
+
+                    // position
                     prefabSettings.positionOffset = EditorGUILayout.Vector3Field("Position Offset", prefabSettings.positionOffset);
-
+                    
+                    // rotation
+                    prefabSettings.rotationOffset = EditorGUILayout.Vector3Field("Rotation Offset", prefabSettings.rotationOffset);
                     prefabSettings.randomRotation = EditorGUILayout.Toggle("Random Rotation", prefabSettings.randomRotation);
-                    prefabSettings.randomScale = EditorGUILayout.Toggle("Random Scale", prefabSettings.randomScale);
-
-                    prefabSettings.randomScaleMin = EditorGUILayout.FloatField("Random Scale Min", prefabSettings.randomScaleMin);
-                    prefabSettings.randomScaleMax = EditorGUILayout.FloatField("Random Scale Max", prefabSettings.randomScaleMax);
 
                 }
             }

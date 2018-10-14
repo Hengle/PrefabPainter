@@ -16,12 +16,9 @@ namespace PrefabPainter
 
         public enum Rotation
         {
-            Prefab,
             Spline,
-            Identity
+            Prefab
         }
-
-
 
         [Range (0,10)]
         public int curveResolution = 0;
@@ -37,6 +34,11 @@ namespace PrefabPainter
         public int lanes = 1;
         public float laneDistance = 1;
         public bool skipCenterLane = false;
+
+        /// <summary>
+        /// Snap to the closest gameobject / terrain up or down relative to the spline controlpoint position
+        /// </summary>
+        public bool snap = false; 
 
         // internal properties
         public bool dirty = false;

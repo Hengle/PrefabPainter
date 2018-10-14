@@ -33,6 +33,8 @@ namespace PrefabPainter
 
         private PrefabModuleEditor prefabModule;
 
+        private Color defaultColor;
+
         PrefabPainterEditor editor;
 
         // TODO handle prefab dragging only in prefab painter editor
@@ -88,9 +90,19 @@ namespace PrefabPainter
                 EditorGUILayout.LabelField("General Settings", GUIStyles.BoxTitleStyle);
 
                 EditorGUILayout.BeginHorizontal();
+
+                // container
                 EditorGUILayout.PrefixLabel("");
+
+                if (this.gizmo.container == null)
+                {
+                    editor.SetErrorBackgroundColor();
+                }
+
                 EditorGUILayout.PropertyField(container);
-                
+
+                editor.SetDefaultBackgroundColor();
+
                 if (GUILayout.Button("New", EditorStyles.miniButton, GUILayout.Width(40)))
                 {
                     GameObject newContainer = new GameObject();
@@ -157,7 +169,15 @@ namespace PrefabPainter
             // Apply changes to the serializedProperty - always do this in the end of OnInspectorGUI.
             editor.serializedObject.ApplyModifiedProperties();
         }
+        public void SetErrorBackgroundColor()
+        {
+            GUI.backgroundColor = GUIStyles.ErrorBackgroundColor;
+        }
 
+        public void SetDefaultBackgroundColor()
+        {
+            GUI.backgroundColor = GUIStyles.DefaultBackgroundColor;
+        }
 
         public void addGUISeparator()
         {
@@ -257,6 +277,20 @@ namespace PrefabPainter
 
             return true;
         }
+
+        #region Common methods
+
+        public Transform[] getContainerChildren()
+        {
+            if (gizmo.container == null)
+                return new Transform[0];
+
+            Transform[] children = gizmo.container.transform.Cast<Transform>().ToArray();
+
+            return children;
+        }
+
+        #endregion Common methods
     }
 
 }
