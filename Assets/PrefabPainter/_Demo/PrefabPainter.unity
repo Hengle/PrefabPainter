@@ -164,10 +164,10 @@ MonoBehaviour:
   - prefab: {fileID: 1500891991828590, guid: 8d06961c7055fbe4d9d9620cfdb319fa, type: 2}
     active: 1
     probability: 1
-    positionOffset: {x: 0, y: 1.3, z: 0}
-    rotationOffset: {x: 10, y: 90, z: 0}
+    positionOffset: {x: 0, y: 1.6, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
-    changeScale: 1
+    changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
   physicsSimulation: {fileID: 1150588484}
