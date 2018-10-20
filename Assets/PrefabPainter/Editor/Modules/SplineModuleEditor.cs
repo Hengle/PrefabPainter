@@ -12,7 +12,8 @@ namespace PrefabPainter
 
         SerializedProperty curveResolution;
         SerializedProperty loop;
-        SerializedProperty distanceBetweenObjects;
+        SerializedProperty separation;
+        SerializedProperty separationDistance;
         SerializedProperty lanes;
         SerializedProperty laneDistance;
         SerializedProperty skipCenterLane;
@@ -20,6 +21,8 @@ namespace PrefabPainter
         SerializedProperty controlPointRotation;
         SerializedProperty attachMode;
         SerializedProperty snap;
+        SerializedProperty debug;
+
         SerializedProperty dirty;
 
         #endregion Properties
@@ -40,7 +43,9 @@ namespace PrefabPainter
 
             curveResolution = editor.FindProperty( x => x.splineSettings.curveResolution);
             loop = editor.FindProperty(x => x.splineSettings.loop);
-            distanceBetweenObjects = editor.FindProperty(x => x.splineSettings.distanceBetweenObjects);
+
+            separation = editor.FindProperty(x => x.splineSettings.separation);
+            separationDistance = editor.FindProperty(x => x.splineSettings.separationDistance);
 
             lanes = editor.FindProperty(x => x.splineSettings.lanes);
             laneDistance = editor.FindProperty(x => x.splineSettings.laneDistance);
@@ -51,6 +56,7 @@ namespace PrefabPainter
             attachMode = editor.FindProperty(x => x.splineSettings.attachMode);
 
             snap = editor.FindProperty(x => x.splineSettings.snap);
+            debug = editor.FindProperty(x => x.splineSettings.debug);
 
             dirty =  editor.FindProperty(x => x.splineSettings.dirty);
 
@@ -66,7 +72,13 @@ namespace PrefabPainter
 
             EditorGUILayout.PropertyField(curveResolution, new GUIContent("Curve Resolution"));
             EditorGUILayout.PropertyField(loop, new GUIContent("Loop"));
-            EditorGUILayout.PropertyField(distanceBetweenObjects, new GUIContent("Distance between Objects"));
+
+            EditorGUILayout.PropertyField(separation, new GUIContent("Separation"));
+            if (gizmo.splineSettings.separation == SplineSettings.Separation.Fixed)
+            {
+                EditorGUILayout.PropertyField(separationDistance, new GUIContent("Separation Distance"));
+            }
+
             EditorGUILayout.PropertyField(lanes, new GUIContent("Lanes"));
             EditorGUILayout.PropertyField(skipCenterLane, new GUIContent("Skip Center Lane"));
             EditorGUILayout.PropertyField(laneDistance, new GUIContent("Lane Distance"));
@@ -84,13 +96,15 @@ namespace PrefabPainter
             EditorGUILayout.PropertyField(attachMode, new GUIContent("Attach Mode"));
             EditorGUILayout.PropertyField(snap, new GUIContent("Snap", "Snap to the closest vertical object / terrain. Best used for initial alignment."));
 
+            EditorGUILayout.PropertyField(debug, new GUIContent("Debug"));
+
             bool changed = EditorGUI.EndChangeCheck();
 
             if( changed)
             {
                 // avoid endless loop by limiting min distance between objects to a value above 0
-                if( distanceBetweenObjects.floatValue <= 0)
-                    distanceBetweenObjects.floatValue = minDistanceBetweenObjectsd;
+                if( separationDistance.floatValue <= 0)
+                    separationDistance.floatValue = minDistanceBetweenObjectsd;
 
 
                 // allow control point rotation only in spline rotation mode

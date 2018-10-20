@@ -49,6 +49,34 @@ namespace PrefabPainter
                     break;
 
             }
+
+            // debug gizmos
+            if( prefabPainter.splineSettings.debug)
+            {
+                foreach (GameObject prefab in prefabPainter.splineSettings.prefabInstances)
+                {
+                    Renderer renderer = prefab.GetComponent<Renderer>();
+                    if (renderer == null)
+                    {
+                        // LOD case: renderer is in the children
+                        renderer = prefab.GetComponentInChildren<Renderer>();
+                    }
+
+                    // https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
+                    Vector3 center = renderer.bounds.center;
+                    float radius = renderer.bounds.extents.magnitude;
+
+                    // sphere
+                    Gizmos.color = Color.white;
+                    Gizmos.DrawWireSphere(center, radius);
+
+                    // rectangle
+                    Gizmos.color = Color.yellow;
+                    Gizmos.DrawWireCube(center, renderer.bounds.size);
+
+
+                }
+            }
         }
 
         /// <summary>
@@ -121,7 +149,6 @@ namespace PrefabPainter
 
             //distanceToMove represents how much farther we need to progress down the spline before we place the next object
             int nextSplinePointIndex = 1;
-            float distanceToMove = prefabPainter.splineSettings.distanceBetweenObjects;
 
             //our current position on the spline
             Vector3 positionIterator = splinePoints[0].position;
@@ -130,7 +157,9 @@ namespace PrefabPainter
             Vector3 direction = (splinePoints[nextSplinePointIndex].position - positionIterator);
 
             // new prefab
-            AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
+            GameObject prefab = AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
+
+            float distanceToMove = GetDistanceToMove( prefab);
 
             while (nextSplinePointIndex < splinePoints.Count)
             {
@@ -144,9 +173,9 @@ namespace PrefabPainter
                     positionIterator += direction * distanceToMove;
 
                     // new prefab
-                    AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
+                    prefab = AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
 
-                    distanceToMove = prefabPainter.splineSettings.distanceBetweenObjects;
+                    distanceToMove = GetDistanceToMove( prefab);
                 }
                 else
                 {
@@ -157,12 +186,55 @@ namespace PrefabPainter
             }
         }
 
+        private float GetDistanceToMove( GameObject prefab)
+        {
+            float distanceToMove = 0;
+            switch ( prefabPainter.splineSettings.separation)
+            {
+                case SplineSettings.Separation.Fixed:
+                    distanceToMove = prefabPainter.splineSettings.separationDistance;
+                    break;
+
+                case SplineSettings.Separation.PrefabBounds:
+                    return GetPrefabSize( prefab);
+
+            }
+
+            // don't return 0, we wouldn't want an endless loop because we can't advance further
+            if( distanceToMove <= 0)
+            {
+                Debug.LogError("Distance to move is <= 0. Using 1");
+                distanceToMove = 1;
+            }
+
+            return distanceToMove;
+
+        }
+
+        private float GetPrefabSize( GameObject prefab)
+        {
+            Renderer renderer = prefab.GetComponent<Renderer>();
+            if (renderer == null)
+            {
+                // LOD case: renderer is in the children
+                renderer = prefab.GetComponentInChildren<Renderer>();
+            }
+
+            // https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
+            //float radius = renderer.bounds.extents.magnitude;
+            float radius = renderer.bounds.size.magnitude;
+
+            return radius;
+        }
 
         /// <summary>
         /// Add a new prefab to the spline
         /// </summary>
-        private void AddPrefab( Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
+        // TODO: rewrite, use different approach: Use fake splines around the current spline. That way the separation distance doesn't matter
+        //       and you could have small prefabs on the outer spline, and big prefabs on the inner spline and they would distribute better
+        private GameObject AddPrefab( Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
+            GameObject instance = null;
 
             // offset for lanes: lanes are from left to right, center is the spline. 
             // so a spline with 5 lanes has these offset lanes: -2, -1, 0, 1, 2
@@ -183,9 +255,9 @@ namespace PrefabPainter
 
                 // check if we have settings at all
                 if (prefabSettings == null)
-                    return;
+                    return null;
 
-                GameObject instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
+                instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
                 
                 ApplyPrefabSettings( offsetLane, prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
 
@@ -197,33 +269,51 @@ namespace PrefabPainter
                 offsetLane++;
             }
 
+            return instance;
         }
 
-        private void ApplyPrefabSettings( int offsetLane, PrefabSettings prefabSettings, GameObject go, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
+        private void ApplyPrefabSettings( int offsetLane, PrefabSettings prefabSettings, GameObject prefab, Vector3 currentPosition, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
-            int lanes = prefabPainter.splineSettings.lanes;
-
-            // add position
-            go.transform.position += prefabSettings.positionOffset;
+            // add prefab's position offset
+            prefab.transform.position += prefabSettings.positionOffset;
 
             // lanes
-            Vector3 splinePosition = go.transform.position;
+            Vector3 splinePosition = prefab.transform.position;
             Quaternion splineRotation = Quaternion.LookRotation(direction);
 
-            // calculate offset distance to spline
-            float offsetDistance = offsetLane * prefabPainter.splineSettings.laneDistance;
+            Vector3 addDistanceToDirection = Vector3.zero;
 
-            // calculate the distance considering the spline direction
-            //Vector3 distance = prefabPainter.splineSettings.lanePositionOffset - go.transform.position;
-            Vector3 addDistanceToDirection = splineRotation * go.transform.right * offsetDistance;
+            if (offsetLane == 0)
+            {
 
-            go.transform.position += addDistanceToDirection;
+                // check if the objects should be aligned next to each other
+                // TODO this is only done for the center lane currently; we don't have the information about the others
+                //      ie this only works in center lane mode currently
+                if (prefabPainter.splineSettings.separation == SplineSettings.Separation.PrefabBounds)
+                {
+                    // move along in the spline rotation, considering the radius
+                    addDistanceToDirection = splineRotation * prefab.transform.forward * GetDistanceToMove(prefab) / 2;
+                }
+
+            }
+            // lane mode, all lanes except center
+            else
+            {
+                // calculate offset distance to spline
+                float offsetDistance = offsetLane * prefabPainter.splineSettings.laneDistance;
+
+                // calculate the distance considering the spline direction
+                //Vector3 distance = prefabPainter.splineSettings.lanePositionOffset - go.transform.position;
+                addDistanceToDirection = splineRotation * prefab.transform.right * offsetDistance;
+            }
+
+            prefab.transform.position += addDistanceToDirection;
 
 
             // size
             if (prefabSettings.changeScale)
             {
-                go.transform.localScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
+                prefab.transform.localScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
             }
 
             // initial rotation
@@ -283,10 +373,10 @@ namespace PrefabPainter
 
             }
                        
-            go.transform.rotation = rotation;
+            prefab.transform.rotation = rotation;
 
             // add prefab rotation offset
-            go.transform.Rotate(prefabSettings.rotationOffset);
+            prefab.transform.Rotate(prefabSettings.rotationOffset);
         }
 
     }

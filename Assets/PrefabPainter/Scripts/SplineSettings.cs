@@ -20,11 +20,19 @@ namespace PrefabPainter
             Prefab
         }
 
+        public enum Separation
+        {
+            Fixed,
+            PrefabBounds
+        }
+
         [Range (0,10)]
         public int curveResolution = 0;
         public bool loop = false;
-        
-        public float distanceBetweenObjects = 1f;
+
+        public Separation separation = Separation.Fixed;
+        public float separationDistance = 1f;
+
         public Rotation instanceRotation = Rotation.Prefab;
 
         public AttachMode attachMode = AttachMode.Bounds;
@@ -38,7 +46,9 @@ namespace PrefabPainter
         /// <summary>
         /// Snap to the closest gameobject / terrain up or down relative to the spline controlpoint position
         /// </summary>
-        public bool snap = false; 
+        public bool snap = false;
+
+        public bool debug = false;
 
         // internal properties
         public bool dirty = false;
