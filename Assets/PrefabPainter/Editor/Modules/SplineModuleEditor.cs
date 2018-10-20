@@ -20,6 +20,7 @@ namespace PrefabPainter
         SerializedProperty instanceRotation;
         SerializedProperty controlPointRotation;
         SerializedProperty attachMode;
+        SerializedProperty reusePrefabs;
         SerializedProperty snap;
         SerializedProperty debug;
 
@@ -55,6 +56,8 @@ namespace PrefabPainter
             controlPointRotation =  editor.FindProperty(x => x.splineSettings.controlPointRotation);
             attachMode = editor.FindProperty(x => x.splineSettings.attachMode);
 
+            reusePrefabs = editor.FindProperty(x => x.splineSettings.reusePrefabs);
+
             snap = editor.FindProperty(x => x.splineSettings.snap);
             debug = editor.FindProperty(x => x.splineSettings.debug);
 
@@ -80,7 +83,12 @@ namespace PrefabPainter
             }
 
             EditorGUILayout.PropertyField(lanes, new GUIContent("Lanes"));
-            EditorGUILayout.PropertyField(skipCenterLane, new GUIContent("Skip Center Lane"));
+
+            if (lanes.intValue > 1)
+            {
+                EditorGUILayout.PropertyField(skipCenterLane, new GUIContent("Skip Center Lane"));
+            }
+
             EditorGUILayout.PropertyField(laneDistance, new GUIContent("Lane Distance"));
 
             EditorGUILayout.PropertyField(instanceRotation, new GUIContent("Rotation"));
@@ -94,6 +102,8 @@ namespace PrefabPainter
             }
 
             EditorGUILayout.PropertyField(attachMode, new GUIContent("Attach Mode"));
+
+            EditorGUILayout.PropertyField(reusePrefabs, new GUIContent("Reuse Prefabs", "If active, then already created prefabs will be reused. Otherwise new prefabs are created whenever something changes ont he spline."));
             EditorGUILayout.PropertyField(snap, new GUIContent("Snap", "Snap to the closest vertical object / terrain. Best used for initial alignment."));
 
             EditorGUILayout.PropertyField(debug, new GUIContent("Debug"));
@@ -102,6 +112,12 @@ namespace PrefabPainter
 
             if( changed)
             {
+                // at least 1 lane must be active
+                if( lanes.intValue <= 1)
+                {
+                    skipCenterLane.boolValue = false;
+                }
+
                 // avoid endless loop by limiting min distance between objects to a value above 0
                 if( separationDistance.floatValue <= 0)
                     separationDistance.floatValue = minDistanceBetweenObjectsd;
@@ -362,8 +378,9 @@ namespace PrefabPainter
             bool nodesChanged = false;
 
             // dizmos
-            foreach (ControlPoint controlPoint in gizmo.splineSettings.controlPoints)
+            for (int i = 0; i < gizmo.splineSettings.controlPoints.Count; i++)
             {
+                ControlPoint controlPoint = gizmo.splineSettings.controlPoints[i];
 
                 // position handles
                 Vector3 oldPosition = controlPoint.position;
@@ -397,6 +414,11 @@ namespace PrefabPainter
                         nodesChanged = true;
                     }
 
+                }
+
+                if( gizmo.splineSettings.debug)
+                {
+                    Handles.Label( controlPoint.position, "Point " + i, EditorStyles.miniBoldLabel);
                 }
 
             }
@@ -520,7 +542,7 @@ namespace PrefabPainter
                 switch (gizmo.splineSettings.attachMode)
                 {
                     case SplineSettings.AttachMode.Bounds:
-                        gizmo.splineSettings.controlPoints.Insert(0, controlPoint);
+                        gizmo.splineSettings.controlPoints.Add( controlPoint);
                         break;
                     case SplineSettings.AttachMode.Between:
                         gizmo.splineSettings.controlPoints.Insert(1, controlPoint);

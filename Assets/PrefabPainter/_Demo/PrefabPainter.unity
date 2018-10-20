@@ -172,16 +172,19 @@ MonoBehaviour:
     scaleMax: 1.5
   physicsSimulation: {fileID: 1150588484}
   splineSettings:
-    curveResolution: 1
+    curveResolution: 5
     loop: 0
-    distanceBetweenObjects: 1
+    separation: 0
+    separationDistance: 0.92
     instanceRotation: 0
-    attachMode: 0
+    attachMode: 1
     controlPointRotation: 0
     lanes: 1
     laneDistance: 1
     skipCenterLane: 0
     snap: 0
+    reusePrefabs: 1
+    debug: 0
     dirty: 0
     prefabInstances: []
 --- !u!4 &574884259
@@ -197,6 +200,34 @@ Transform:
   - {fileID: 1160956118}
   m_Father: {fileID: 0}
   m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &856329195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 856329196}
+  m_Layer: 0
+  m_Name: Container (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &856329196
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 856329195}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1460711809}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1148919015
 GameObject:
@@ -341,6 +372,106 @@ Transform:
   m_Father: {fileID: 1840661335}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1460711807
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1460711809}
+  - component: {fileID: 1460711808}
+  m_Layer: 0
+  m_Name: Primitives
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1460711808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1460711807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 817f7313c0941314295215e94151a3e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  container: {fileID: 856329195}
+  mode: 1
+  paintSettings:
+    brushSize: 2
+    alignToTerrain: 0
+  prefabSettingsList:
+  - prefab: {fileID: 1414477670954642, guid: 626b903f2d0f0594389f3c7eef789aba, type: 2}
+    active: 1
+    probability: 1
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    randomRotation: 0
+    changeScale: 0
+    scaleMin: 0.5
+    scaleMax: 1.5
+  - prefab: {fileID: 1440074246936570, guid: b44914f1863d89944975413951b5cb2b, type: 2}
+    active: 1
+    probability: 1
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    randomRotation: 0
+    changeScale: 0
+    scaleMin: 0.5
+    scaleMax: 1.5
+  - prefab: {fileID: 1483845257301048, guid: 43e4df84b5be7e441899b04e412a3d66, type: 2}
+    active: 1
+    probability: 1
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    randomRotation: 0
+    changeScale: 0
+    scaleMin: 0.5
+    scaleMax: 1.5
+  - prefab: {fileID: 1929132347765138, guid: 33fa12decdc1b854d8a53d2ccbfc2c83, type: 2}
+    active: 1
+    probability: 1
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    randomRotation: 0
+    changeScale: 0
+    scaleMin: 0.5
+    scaleMax: 1.5
+  physicsSimulation: {fileID: 1593914959}
+  splineSettings:
+    curveResolution: 7
+    loop: 0
+    separation: 1
+    separationDistance: 1.96
+    instanceRotation: 0
+    attachMode: 0
+    controlPointRotation: 0
+    lanes: 1
+    laneDistance: 1
+    skipCenterLane: 0
+    snap: 0
+    reusePrefabs: 1
+    debug: 0
+    dirty: 0
+    prefabInstances: []
+--- !u!4 &1460711809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1460711807}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 59.06652, y: -9.2914295, z: 419.2878}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 856329196}
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1468827735
 GameObject:
   m_ObjectHideFlags: 0
@@ -407,6 +538,21 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &1593914959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a0ecbae19869b245b50fca94ab6680a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxIterations: 1000
+  forceMinMax: {x: 0, y: 0}
+  forceAngleInDegrees: 0
+  randomizeForceAngle: 0
 --- !u!1 &1766834831
 GameObject:
   m_ObjectHideFlags: 0
@@ -547,7 +693,8 @@ MonoBehaviour:
   splineSettings:
     curveResolution: 0
     loop: 0
-    distanceBetweenObjects: 1
+    separation: 0
+    separationDistance: 1
     instanceRotation: 0
     attachMode: 0
     controlPointRotation: 0
@@ -555,6 +702,8 @@ MonoBehaviour:
     laneDistance: 1
     skipCenterLane: 0
     snap: 0
+    reusePrefabs: 1
+    debug: 0
     dirty: 0
     prefabInstances: []
 --- !u!4 &1840661335

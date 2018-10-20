@@ -48,11 +48,18 @@ namespace PrefabPainter
         /// </summary>
         public bool snap = false;
 
+        /// <summary>
+        /// Recreate the prefabs on every change of the spline
+        /// </summary>
+        public bool reusePrefabs = true;
+
         public bool debug = false;
 
         // internal properties
         public bool dirty = false;
+
         public List<GameObject> prefabInstances = new List<GameObject>();
+
         public List<ControlPoint> controlPoints = new List<ControlPoint>();
     }
 }

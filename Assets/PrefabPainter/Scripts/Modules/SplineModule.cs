@@ -55,6 +55,7 @@ namespace PrefabPainter
             {
                 foreach (GameObject prefab in prefabPainter.splineSettings.prefabInstances)
                 {
+
                     Renderer renderer = prefab.GetComponent<Renderer>();
                     if (renderer == null)
                     {
@@ -102,19 +103,55 @@ namespace PrefabPainter
             public int startControlPointIndex;
         }
 
-        public void PlaceObjects()
+        private void RemoveAllPrefabInstances()
         {
-
-            // clear existing prefabs
-            foreach (GameObject go in prefabPainter.splineSettings.prefabInstances)
+            foreach (GameObject prefab in prefabPainter.splineSettings.prefabInstances)
             {
-                PrefabPainter.DestroyImmediate(go);
+                PrefabPainter.DestroyImmediate(prefab);
             }
 
             prefabPainter.splineSettings.prefabInstances.Clear();
 
-            if (prefabPainter.splineSettings.controlPoints.Count < 2)
+        }
+
+        private void RemovePrefabInstances( int startIndex)
+        {
+            // startIndex might be -1 if there are no prefabs; prefabInstanceIndex would be -1
+            // also needed if you delete control points and only 1 is left
+            if (startIndex < 0)
+            {
+                RemoveAllPrefabInstances();
                 return;
+            }
+
+            // clear existing prefabs
+            for (int i = prefabPainter.splineSettings.prefabInstances.Count - 1; i >= startIndex; i--)
+            {
+                GameObject prefab = prefabPainter.splineSettings.prefabInstances[i];
+
+                PrefabPainter.DestroyImmediate(prefab);
+
+                prefabPainter.splineSettings.prefabInstances.RemoveAt( i);
+
+            }
+        }
+
+        public void PlaceObjects()
+        {
+            // recreate and redistribute all prefabs if requested
+            if (!prefabPainter.splineSettings.reusePrefabs)
+            {
+                RemoveAllPrefabInstances();
+            }
+
+            if (prefabPainter.splineSettings.controlPoints.Count < 2)
+            {
+                // remove all that's left in case control points were deleted
+                RemoveAllPrefabInstances();
+
+                // don't continue any further
+                return;
+            }
 
             // put the spline into a list of Vector3's instead of using the iterator
             IEnumerable<Vector3> spline = CreateSpline();
@@ -156,8 +193,10 @@ namespace PrefabPainter
             // the algorithm skips the first control point, so we need to manually place the first object
             Vector3 direction = (splinePoints[nextSplinePointIndex].position - positionIterator);
 
+            int prefabInstanceIndex = -1;
+
             // new prefab
-            GameObject prefab = AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
+            GameObject prefab = AddPrefab(ref prefabInstanceIndex, positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
 
             float distanceToMove = GetDistanceToMove( prefab);
 
@@ -173,7 +212,7 @@ namespace PrefabPainter
                     positionIterator += direction * distanceToMove;
 
                     // new prefab
-                    prefab = AddPrefab(positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
+                    prefab = AddPrefab(ref prefabInstanceIndex, positionIterator, direction, splinePoints, nextSplinePointIndex - 1);
 
                     distanceToMove = GetDistanceToMove( prefab);
                 }
@@ -184,11 +223,18 @@ namespace PrefabPainter
                 }
 
             }
+
+            // remove prefab instances that aren't used anymore
+            if( prefabPainter.splineSettings.reusePrefabs)
+            {
+                RemovePrefabInstances(prefabInstanceIndex);
+            }
         }
 
         private float GetDistanceToMove( GameObject prefab)
         {
             float distanceToMove = 0;
+
             switch ( prefabPainter.splineSettings.separation)
             {
                 case SplineSettings.Separation.Fixed:
@@ -232,7 +278,7 @@ namespace PrefabPainter
         /// </summary>
         // TODO: rewrite, use different approach: Use fake splines around the current spline. That way the separation distance doesn't matter
         //       and you could have small prefabs on the outer spline, and big prefabs on the inner spline and they would distribute better
-        private GameObject AddPrefab( Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
+        private GameObject AddPrefab( ref int prefabInstanceIndex, Vector3 position, Vector3 direction, List<SplinePoint> splinePoints, int currentSplinePointIndex)
         {
             GameObject instance = null;
 
@@ -257,11 +303,31 @@ namespace PrefabPainter
                 if (prefabSettings == null)
                     return null;
 
-                instance = GameObject.Instantiate( prefabSettings.prefab, position, Quaternion.identity);
-                
-                ApplyPrefabSettings( offsetLane, prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
+                // instance will be created or used => advance index
+                prefabInstanceIndex++;
 
-                prefabPainter.splineSettings.prefabInstances.Add(instance);
+                // check if we have to create a new instance or use an existing one
+                if (prefabPainter.splineSettings.reusePrefabs)
+                {
+                    if (prefabInstanceIndex < prefabPainter.splineSettings.prefabInstances.Count)
+                    {
+                        instance = prefabPainter.splineSettings.prefabInstances[prefabInstanceIndex];
+                    }
+                }
+
+                // create instance if we don't have one yet
+                if( instance == null)
+                {
+                    instance = GameObject.Instantiate(prefabSettings.prefab);
+
+                    prefabPainter.splineSettings.prefabInstances.Add(instance);
+                }
+
+                // reset position & rotation
+                instance.transform.position = position;
+                instance.transform.rotation = Quaternion.identity;
+
+                ApplyPrefabSettings( offsetLane, prefabSettings, instance, position, direction, splinePoints, currentSplinePointIndex);
 
                 // reparent the child to the container
                 instance.transform.parent = prefabPainter.container.transform;
