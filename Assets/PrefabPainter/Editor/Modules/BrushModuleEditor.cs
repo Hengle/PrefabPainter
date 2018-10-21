@@ -11,19 +11,21 @@ namespace PrefabPainter
         #region Properties
 
         SerializedProperty brushSize;
+        SerializedProperty allowOverlap;
         SerializedProperty alignToTerrain;
+        SerializedProperty distribution;
+        SerializedProperty poissonDiscSize;
 
         #endregion Properties
 
-        #pragma warning disable 0414
+#pragma warning disable 0414
         PrefabPainterEditor editor;
         #pragma warning restore 0414
          
         PrefabPainter gizmo;
 
 
-        private bool mousePosValid = false;
-        private Vector3 mousePos; 
+
 
         private enum BrushMode
         {
@@ -39,6 +41,9 @@ namespace PrefabPainter
 
             brushSize = editor.FindProperty( x => x.brushSettings.brushSize);
             alignToTerrain = editor.FindProperty(x => x.brushSettings.alignToTerrain);
+            distribution = editor.FindProperty(x => x.brushSettings.distribution);
+            poissonDiscSize = editor.FindProperty(x => x.brushSettings.poissonDiscSize);
+            allowOverlap = editor.FindProperty(x => x.brushSettings.allowOverlap);
 
         }
 
@@ -50,6 +55,25 @@ namespace PrefabPainter
 
             EditorGUILayout.PropertyField(brushSize, new GUIContent("Brush Size"));
             EditorGUILayout.PropertyField(alignToTerrain, new GUIContent("Align To Terrain"));
+            EditorGUILayout.PropertyField(allowOverlap, new GUIContent("Allow Overlap", "Center Mode: Check against brush size.\nPoisson Mode: Check against Poisson Disc size"));
+
+            EditorGUILayout.PropertyField(distribution, new GUIContent("Distribution"));
+
+            if( gizmo.brushSettings.distribution == BrushSettings.Distribution.Poisson)
+            {
+                //EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(poissonDiscSize, new GUIContent("Poisson Disc Size"));
+                //EditorGUI.indentLevel--;
+            }
+
+
+            // consistency check
+            float minDiscSize = 0.01f;
+            if( poissonDiscSize.floatValue < minDiscSize)
+            {
+                Debug.LogError("Poisson Disc Size is too small. Setting it to " + minDiscSize);
+                poissonDiscSize.floatValue = minDiscSize;
+            }
 
             GUILayout.EndVertical();
 
@@ -59,6 +83,9 @@ namespace PrefabPainter
 
         public void OnSceneGUI()
         {
+            bool mousePosValid = false;
+            Vector3 mousePos = Vector3.zero;
+
             float radius = gizmo.brushSettings.brushSize / 2f;
 
             int controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
@@ -132,7 +159,7 @@ namespace PrefabPainter
                                 AddPrefabs(hit);
                                 break;
                             case BrushMode.Remove:
-                                RemovePrefabs(hit);
+                                RemovePrefabs(hit.point);
                                 break;
                         }
                         
@@ -155,7 +182,10 @@ namespace PrefabPainter
             // note: Handles.BeginGUI and EndGUI are important, otherwise the default gizmos aren't drawn
             Handles.BeginGUI();
 
-            ShowHandleInfo();
+
+            if (mousePosValid) {
+                ShowHandleInfo( mousePos);
+            }
 
             string[] info = new string[] { "Add prefabs: shift + drag mouse\nRemove prefabs: shift + ctrl + drag mouse\nBrush size: ctrl + mousewheel" ,"Children: " + editor.getContainerChildren().Length };
             PrefabPainterEditor.ShowGuiInfo(info);
@@ -188,117 +218,205 @@ namespace PrefabPainter
 
             // inner disc
             Handles.color = innerColor;
-            Handles.DrawSolidDisc(mousePos, normal, radius);
+            Handles.DrawSolidDisc(position, normal, radius);
 
             // outer circle
             Handles.color = outerColor;
-            Handles.DrawWireDisc(mousePos, normal, radius);
+            Handles.DrawWireDisc(position, normal, radius);
 
             // center line / normal
             float lineLength = radius * 0.5f;
-            Vector3 lineStart = mousePos;
-            Vector3 lineEnd = mousePos + normal * lineLength;
+            Vector3 lineStart = position;
+            Vector3 lineEnd = position + normal * lineLength;
             Handles.DrawLine(lineStart, lineEnd);
 
 
         }
 
-        private void ShowHandleInfo()
+        private void ShowHandleInfo( Vector3 position)
         {
-
-            if (!mousePosValid)
-                return;
-
             // example about how to show info at the gizmo
             GUIStyle style = new GUIStyle();
             style.normal.textColor = Color.blue;
-            string text = "Mouse Postion: " + mousePos;
+            string text = "Mouse Postion: " + position;
             text += "\n";
             text += "Children: " + editor.getContainerChildren().Length;
-            Handles.Label(mousePos, text, style);
+            Handles.Label(position, text, style);
         }
 
 
         #region Paint Prefabs
 
-        /// <summary>
-        /// Add prefabs
-        /// </summary>
         private void AddPrefabs(RaycastHit hit)
         {
-
             if (!editor.IsEditorSettingsValid())
                 return;
-             
-            bool prefabExists = false;
+
+            switch (gizmo.brushSettings.distribution)
+            {
+                case BrushSettings.Distribution.Center:
+                    AddPrefabs_Center(hit.point, hit.normal);
+                    break;
+                case BrushSettings.Distribution.Poisson:
+                    AddPrefabs_Poisson(hit.point, hit.normal);
+                    break;
+            }
+
+        }
+
+        /// <summary>
+        /// Add prefabs, mode Center
+        /// </summary>
+        private void AddPrefabs_Center( Vector3 position, Vector3 normal)
+        {
 
             // check if a gameobject is already within the brush size
             // allow only 1 instance per bush size
             GameObject container = gizmo.container as GameObject;
 
-            float radius = gizmo.brushSettings.brushSize / 2f;
 
-            foreach (Transform child in container.transform)
+            // check if a prefab already exists within the brush
+            bool prefabExists = false;
+
+            // check overlap
+            if (!gizmo.brushSettings.allowOverlap)
             {
-                float dist = Vector3.Distance(mousePos, child.transform.position);
-                
-                if (dist <= radius)
-                {
-                    prefabExists = true;
-                    break;
-                }
+                float brushRadius = gizmo.brushSettings.brushSize / 2f;
 
+                foreach (Transform child in container.transform)
+                {
+                    float dist = Vector3.Distance(position, child.transform.position);
+
+                    // check against the brush
+                    if (dist <= brushRadius)
+                    {
+                        prefabExists = true;
+                        break;
+                    }
+
+                }
             }
 
             if (!prefabExists)
             {
-                PrefabSettings prefabSettings = this.gizmo.GetPrefabSettings();
-
-                // new prefab
-                GameObject instance = PrefabUtility.InstantiatePrefab( prefabSettings.prefab) as GameObject;
-
-                // size
-                if ( prefabSettings.changeScale)
-                {
-                    instance.transform.localScale = Vector3.one * Random.Range( prefabSettings.scaleMin, prefabSettings.scaleMax);
-                }
-
-                // position
-                instance.transform.position = new Vector3(mousePos.x, mousePos.y, mousePos.z);
-
-                // add offset
-                instance.transform.position +=  prefabSettings.positionOffset;
-
-                // rotation
-                Quaternion rotation;
-                if ( prefabSettings.randomRotation)
-                {
-                    rotation = Random.rotation;
-                }
-                else if( this.gizmo.brushSettings.alignToTerrain)
-                {
-                    rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-                }
-                else
-                {
-                    rotation = Quaternion.Euler(prefabSettings.rotationOffset);
-                    //rotation = Quaternion.identity;
-                }
-
-                instance.transform.rotation = rotation;
-
-                // attach as child of container
-                instance.transform.parent = container.transform;
-
-                Undo.RegisterCreatedObjectUndo(instance, "Instantiate Prefab");
-
+                AddNewPrefab(position, normal);
             }
         }
 
+        private void AddNewPrefab( Vector3 position, Vector3 normal)
+        {
+
+            GameObject container = gizmo.container as GameObject;
+
+            PrefabSettings prefabSettings = this.gizmo.GetPrefabSettings();
+
+            // new prefab
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefabSettings.prefab) as GameObject;
+
+            // size
+            if (prefabSettings.changeScale)
+            {
+                instance.transform.localScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
+            }
+
+            // position
+            instance.transform.position = position;
+
+            // add offset
+            instance.transform.position += prefabSettings.positionOffset;
+
+            // rotation
+            Quaternion rotation;
+            if (prefabSettings.randomRotation)
+            {
+                rotation = Random.rotation;
+            }
+            else if (this.gizmo.brushSettings.alignToTerrain)
+            {
+                rotation = Quaternion.FromToRotation(Vector3.up, normal);
+            }
+            else
+            {
+                rotation = Quaternion.Euler(prefabSettings.rotationOffset);
+                //rotation = Quaternion.identity;
+            }
+
+            instance.transform.rotation = rotation;
+
+            // attach as child of container
+            instance.transform.parent = container.transform;
+
+            Undo.RegisterCreatedObjectUndo(instance, "Instantiate Prefab");
+        }
+
         /// <summary>
-        /// Add prefabs
+        /// Add prefabs, mode Center
         /// </summary>
-        private void RemovePrefabs(RaycastHit hit)
+        private void AddPrefabs_Poisson(Vector3 position, Vector3 normal)
+        {
+            GameObject container = gizmo.container as GameObject;
+
+            float brushSize = gizmo.brushSettings.brushSize;
+            float brushRadius = brushSize / 2.0f;
+            float discRadius = gizmo.brushSettings.poissonDiscSize / 2;
+
+            PoissonDiscSampler sampler = new PoissonDiscSampler(brushSize, brushSize, discRadius);
+
+            foreach (Vector2 sample in sampler.Samples()) {
+
+                // brush is currenlty a disc => ensure the samples are within the disc
+                if (Vector2.Distance(sample, new Vector2(brushRadius, brushRadius)) > brushRadius)
+                    continue;
+
+                // x/z come from the poisson sample 
+                float x = position.x + sample.x - brushRadius;
+                float z = position.z + sample.y - brushRadius;
+
+                // y depends on the terrain height
+                Vector3 terrainPosition = new Vector3(x, position.y, z);
+
+                // get terrain y position
+                float y = Terrain.activeTerrain.SampleHeight(terrainPosition);
+
+                Vector3 prefabPosition = new Vector3( x, y, z);
+
+                // check if a prefab already exists within the brush
+                bool prefabExists = false;
+
+                // check overlap
+                if (!gizmo.brushSettings.allowOverlap)
+                {
+                    foreach (Transform child in container.transform)
+                    {
+                        float dist = Vector3.Distance(prefabPosition, child.transform.position);
+
+                        // check against a single poisson disc
+                        if (dist <= discRadius)
+                        {
+                            prefabExists = true;
+                            break;
+                        }
+
+                    }
+                }
+
+                // add prefab
+                if( !prefabExists)
+                {
+                    AddNewPrefab(prefabPosition, normal);
+                }
+                
+
+            }
+
+           
+        }
+
+
+        /// <summary>
+        /// Remove prefabs
+        /// </summary>
+        private void RemovePrefabs( Vector3 position)
         {
 
             if (!editor.IsEditorSettingsValid())
@@ -313,7 +431,7 @@ namespace PrefabPainter
 
             foreach (Transform transform in container.transform)
             {
-                float dist = Vector3.Distance(mousePos, transform.transform.position);
+                float dist = Vector3.Distance(position, transform.transform.position);
 
                 if (dist <= radius)
                 {

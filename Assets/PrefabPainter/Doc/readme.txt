@@ -74,3 +74,7 @@ Credits
   Getting the SerializedProperty from an object instead of a string. See example:
   https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Editor/PostProcessVolumeEditor.cs
 
+- Gregory Schlomoff
+
+  Poisson Disc Sampling in Unity
+  http://gregschlom.com/devlog/2014/06/29/Poisson-disc-sampling-Unity.html
