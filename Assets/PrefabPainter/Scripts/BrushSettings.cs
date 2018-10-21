@@ -5,7 +5,7 @@ using UnityEngine;
 namespace PrefabPainter
 {
     [System.Serializable]
-    public class PaintSettings
+    public class BrushSettings
     {
         public float brushSize = 2.0f;
         public bool alignToTerrain = false;

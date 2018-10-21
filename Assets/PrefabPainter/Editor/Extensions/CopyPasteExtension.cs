@@ -26,6 +26,9 @@ namespace PrefabPainter
             EditorGUILayout.LabelField("Copy/Paste", GUIStyles.BoxTitleStyle);
 
             // transform copy/paste
+
+            // GUILayout.BeginHorizontal();
+
             if (GUILayout.Button("Copy Transforms"))
             {
                 CopyTransforms();
@@ -34,6 +37,8 @@ namespace PrefabPainter
             {
                 PasteTransforms();
             }
+
+            // GUILayout.EndHorizontal();
 
             EditorGUILayout.HelpBox("Use in combination with Physics to revert to another state than the previous one.", MessageType.Info);
 

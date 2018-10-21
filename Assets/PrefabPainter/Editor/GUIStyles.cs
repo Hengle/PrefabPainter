@@ -38,5 +38,15 @@ namespace PrefabPainter
 
         public static Color DefaultBackgroundColor = GUI.backgroundColor;
         public static Color ErrorBackgroundColor = new Color( 1f,0f,0f,0.7f); // red tone
+
+        public static Color BrushNoneInnerColor = new Color(0f, 0f, 1f, 0.05f); // blue tone
+        public static Color BrushNoneOuterColor = new Color(0f, 0f, 1f, 1f); // blue tone
+
+        public static Color BrushAddInnerColor = new Color(0f, 1f, 0f, 0.05f); // green tone
+        public static Color BrushAddOuterColor = new Color(0f, 1f, 0f, 1f); // green tone
+
+        public static Color BrushRemoveInnerColor = new Color(1f, 0f, 0f, 0.05f); // red tone
+        public static Color BrushRemoveOuterColor = new Color(1f, 0f, 0f, 1f); // red tone
+
     }
 }

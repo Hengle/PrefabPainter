@@ -36,7 +36,7 @@ namespace PrefabPainter
 
         #region Remove Container Children
 
-        private void RemoveContainerChildren()
+        public void RemoveContainerChildren()
         {
             GameObject container = gizmo.container as GameObject;
 

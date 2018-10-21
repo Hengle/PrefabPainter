@@ -28,7 +28,7 @@ namespace PrefabPainter
         private ToolsExtension toolsModule;
 
         private ContainerModuleEditor containerModule;
-        private PaintModuleEditor paintModule;
+        private BrushModuleEditor brushModule;
         private SplineModuleEditor splineModule;
 
         private PrefabModuleEditor prefabModule;
@@ -40,6 +40,8 @@ namespace PrefabPainter
         // TODO handle prefab dragging only in prefab painter editor
         public List<PrefabSettings> newDraggedPrefabs = null;
 
+        GUIContent[] modeButtons;
+
         public void OnEnable()
         {
             this.editor = this;
@@ -49,7 +51,7 @@ namespace PrefabPainter
 
             this.gizmo = target as PrefabPainter;
 
-            this.paintModule = new PaintModuleEditor(this);
+            this.brushModule = new BrushModuleEditor(this);
             this.splineModule = new SplineModuleEditor(this);
             this.containerModule = new ContainerModuleEditor(this);
             this.prefabModule = new PrefabModuleEditor(this);
@@ -57,12 +59,20 @@ namespace PrefabPainter
             this.copyPasteModule = new CopyPasteExtension(this);
             this.toolsModule = new ToolsExtension(this);
 
+            modeButtons = new GUIContent[]
+            {
+                // TODO: icons
+                new GUIContent( "Brush", "Paint prefabs using a brush"),
+                new GUIContent( "Spline", "Align prefabs along a spline"),
+                new GUIContent( "Operations", "Operations on the container"),
+            };
         }
 
         public PrefabPainter GetPainter()
         {
             return this.gizmo;
         }
+
 
         public override void OnInspectorGUI()
         {
@@ -83,6 +93,7 @@ namespace PrefabPainter
             /// 
             /// General settings
             /// 
+
 
             GUILayout.BeginVertical("box");
             {
@@ -107,7 +118,7 @@ namespace PrefabPainter
                 {
                     GameObject newContainer = new GameObject();
 
-                    string name = "Container" + " (" + (this.gizmo.transform.childCount + 1) + ")";
+                    string name = gizmo.name + " Container" + " (" + (this.gizmo.transform.childCount + 1) + ")";
                     newContainer.name = name;
 
                     // set parent; reset position & rotation
@@ -117,16 +128,38 @@ namespace PrefabPainter
                     container.objectReferenceValue = newContainer;
 
                 }
-                EditorGUILayout.EndHorizontal();
 
-                EditorGUILayout.PropertyField(mode, new GUIContent("Mode"));
+                if (GUILayout.Button("Clear", EditorStyles.miniButton, GUILayout.Width(40)))
+                {
+                    if(container != null)
+                    {
+                        this.toolsModule.RemoveContainerChildren();
+                    }
+  
+                }
+
+                EditorGUILayout.EndHorizontal();
 
             }
             GUILayout.EndVertical();
 
             ///
-            /// draw custom components
+            /// mode
             /// 
+
+            GUILayout.BeginVertical("box");
+            {
+
+                EditorGUILayout.LabelField("Mode", GUIStyles.BoxTitleStyle);
+
+                EditorGUILayout.BeginHorizontal();
+
+                mode.intValue = GUILayout.Toolbar(mode.intValue, modeButtons);
+
+                EditorGUILayout.EndHorizontal();
+
+            }
+            GUILayout.EndVertical();
 
             /// 
             /// Mode dependent
@@ -134,31 +167,38 @@ namespace PrefabPainter
 
             switch (this.gizmo.mode)
             {
-                case PrefabPainter.Mode.Paint:
-                    paintModule.OnInspectorGUI();
+                case PrefabPainter.Mode.Brush:
+                    brushModule.OnInspectorGUI();
+
+                    /// Prefabs
+                    this.prefabModule.OnInspectorGUI();
+
                     break;
 
                 case PrefabPainter.Mode.Spline:
                     splineModule.OnInspectorGUI();
+
+                    /// Prefabs
+                    this.prefabModule.OnInspectorGUI();
+
                     break;
 
                 case PrefabPainter.Mode.Container:
                     containerModule.OnInspectorGUI();
+
+                    /// Physics
+                    this.physicsModule.OnInspectorGUI();
+
+                    /// Copy/Paste
+                    this.copyPasteModule.OnInspectorGUI();
+
+                    // Tools
+                    this.toolsModule.OnInspectorGUI();
                     break;
                     
             }
 
-            /// Prefabs
-            this.prefabModule.OnInspectorGUI();
 
-            /// Physics
-            this.physicsModule.OnInspectorGUI();
-
-            /// Copy/Paste
-            this.copyPasteModule.OnInspectorGUI();
-
-            // Tools
-            this.toolsModule.OnInspectorGUI();
 
             // add new prefabs
             if(newDraggedPrefabs != null)
@@ -200,8 +240,8 @@ namespace PrefabPainter
 
             switch (this.gizmo.mode)
             {
-                case PrefabPainter.Mode.Paint:
-                    paintModule.OnSceneGUI();
+                case PrefabPainter.Mode.Brush:
+                    brushModule.OnSceneGUI();
                     break;
 
                 case PrefabPainter.Mode.Spline:

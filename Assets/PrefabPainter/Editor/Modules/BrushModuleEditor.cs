@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace PrefabPainter
 {
-    public class PaintModuleEditor: ModuleEditorI
+    public class BrushModuleEditor: ModuleEditorI
     {
         #region Properties
 
@@ -25,13 +25,20 @@ namespace PrefabPainter
         private bool mousePosValid = false;
         private Vector3 mousePos; 
 
-        public PaintModuleEditor(PrefabPainterEditor editor)
+        private enum BrushMode
+        {
+            None,
+            Add,
+            Remove
+        }
+
+        public BrushModuleEditor(PrefabPainterEditor editor)
         {
             this.editor = editor;
             this.gizmo = editor.GetPainter();
 
-            brushSize = editor.FindProperty( x => x.paintSettings.brushSize);
-            alignToTerrain = editor.FindProperty(x => x.paintSettings.alignToTerrain);
+            brushSize = editor.FindProperty( x => x.brushSettings.brushSize);
+            alignToTerrain = editor.FindProperty(x => x.brushSettings.alignToTerrain);
 
         }
 
@@ -39,7 +46,7 @@ namespace PrefabPainter
         {
             GUILayout.BeginVertical("box");
 
-            EditorGUILayout.LabelField("Paint settings", GUIStyles.BoxTitleStyle);
+            EditorGUILayout.LabelField("Brush settings", GUIStyles.BoxTitleStyle);
 
             EditorGUILayout.PropertyField(brushSize, new GUIContent("Brush Size"));
             EditorGUILayout.PropertyField(alignToTerrain, new GUIContent("Align To Terrain"));
@@ -52,7 +59,7 @@ namespace PrefabPainter
 
         public void OnSceneGUI()
         {
-            float radius = gizmo.paintSettings.brushSize / 2f;
+            float radius = gizmo.brushSettings.brushSize / 2f;
 
             int controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
 
@@ -65,10 +72,6 @@ namespace PrefabPainter
             {
                 mousePos = hit.point;
                 mousePosValid = true;
-
-                Handles.color = Color.red;
-                Handles.DrawWireDisc(mousePos, hit.normal, radius);
-
 
                 ///
                 /// process mouse events
@@ -83,28 +86,56 @@ namespace PrefabPainter
 
                         if (Event.current.delta.y > 0)
                         {
-                            gizmo.paintSettings.brushSize++;
+                            gizmo.brushSettings.brushSize++;
                             Event.current.Use();
                         }
                         else if (Event.current.delta.y < 0)
                         {
-                            gizmo.paintSettings.brushSize--;
+                            gizmo.brushSettings.brushSize--;
 
                             // TODO: slider
-                            if (gizmo.paintSettings.brushSize < 1)
-                                gizmo.paintSettings.brushSize = 1;
+                            if (gizmo.brushSettings.brushSize < 1)
+                                gizmo.brushSettings.brushSize = 1;
 
                             Event.current.Use();
                         }
                     }
+
                 }
 
+                BrushMode brushMode = BrushMode.None;
+                if (Event.current.shift)
+                {
+                    brushMode = BrushMode.Add;
+
+                    if (Event.current.control)
+                    {
+                        brushMode = BrushMode.Remove;
+                    }
+
+                }
+
+                // draw brush gizmo
+                DrawBrush(mousePos, hit.normal, radius, brushMode);
+
+                // paint prefabs on mouse drag
                 if (Event.current.type == EventType.MouseDrag || Event.current.type == EventType.MouseDown)
                 {
                     // left button = 0; right = 1; middle = 2
                     if (Event.current.button == 0)
                     {
-                        PerformEditorAction(hit);
+                        switch (brushMode)
+                        {
+                            case BrushMode.None:
+                                break;
+                            case BrushMode.Add:
+                                AddPrefabs(hit);
+                                break;
+                            case BrushMode.Remove:
+                                RemovePrefabs(hit);
+                                break;
+                        }
+                        
                         Event.current.Use();
                     }
                 }
@@ -126,10 +157,50 @@ namespace PrefabPainter
 
             ShowHandleInfo();
 
-            string[] info = new string[] { "Use ctrl + mousewheel to adjust the brush size\nPress left mouse button and drag to paint prefabs" ,"Children: " + editor.getContainerChildren().Length };
+            string[] info = new string[] { "Add prefabs: shift + drag mouse\nRemove prefabs: shift + ctrl + drag mouse\nBrush size: ctrl + mousewheel" ,"Children: " + editor.getContainerChildren().Length };
             PrefabPainterEditor.ShowGuiInfo(info);
 
             Handles.EndGUI();
+        }
+
+        private void DrawBrush( Vector3 position, Vector3 normal, float radius, BrushMode brushMode)
+        {
+            // set default colors
+            Color innerColor = GUIStyles.BrushNoneInnerColor;
+            Color outerColor = GUIStyles.BrushNoneOuterColor;
+
+            // set colors depending on brush mode
+            switch (brushMode)
+            {
+                case BrushMode.None:
+                    innerColor = GUIStyles.BrushNoneInnerColor;
+                    outerColor = GUIStyles.BrushNoneOuterColor;
+                    break;
+                case BrushMode.Add:
+                    innerColor = GUIStyles.BrushAddInnerColor;
+                    outerColor = GUIStyles.BrushAddOuterColor;
+                    break;
+                case BrushMode.Remove:
+                    innerColor = GUIStyles.BrushRemoveInnerColor;
+                    outerColor = GUIStyles.BrushRemoveOuterColor;
+                    break;
+            }
+
+            // inner disc
+            Handles.color = innerColor;
+            Handles.DrawSolidDisc(mousePos, normal, radius);
+
+            // outer circle
+            Handles.color = outerColor;
+            Handles.DrawWireDisc(mousePos, normal, radius);
+
+            // center line / normal
+            float lineLength = radius * 0.5f;
+            Vector3 lineStart = mousePos;
+            Vector3 lineEnd = mousePos + normal * lineLength;
+            Handles.DrawLine(lineStart, lineEnd);
+
+
         }
 
         private void ShowHandleInfo()
@@ -151,9 +222,9 @@ namespace PrefabPainter
         #region Paint Prefabs
 
         /// <summary>
-        /// Check if the distance 
+        /// Add prefabs
         /// </summary>
-        private void PerformEditorAction(RaycastHit hit)
+        private void AddPrefabs(RaycastHit hit)
         {
 
             if (!editor.IsEditorSettingsValid())
@@ -165,11 +236,13 @@ namespace PrefabPainter
             // allow only 1 instance per bush size
             GameObject container = gizmo.container as GameObject;
 
+            float radius = gizmo.brushSettings.brushSize / 2f;
+
             foreach (Transform child in container.transform)
             {
                 float dist = Vector3.Distance(mousePos, child.transform.position);
-
-                if (dist <= gizmo.paintSettings.brushSize)
+                
+                if (dist <= radius)
                 {
                     prefabExists = true;
                     break;
@@ -202,7 +275,7 @@ namespace PrefabPainter
                 {
                     rotation = Random.rotation;
                 }
-                else if( this.gizmo.paintSettings.alignToTerrain)
+                else if( this.gizmo.brushSettings.alignToTerrain)
                 {
                     rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
                 }
@@ -220,6 +293,41 @@ namespace PrefabPainter
                 Undo.RegisterCreatedObjectUndo(instance, "Instantiate Prefab");
 
             }
+        }
+
+        /// <summary>
+        /// Add prefabs
+        /// </summary>
+        private void RemovePrefabs(RaycastHit hit)
+        {
+
+            if (!editor.IsEditorSettingsValid())
+                return;
+
+            // check if a gameobject of the container is within the brush size and remove it
+            GameObject container = gizmo.container as GameObject;
+
+            float radius = gizmo.brushSettings.brushSize / 2f;
+
+            List<Transform> removeList = new List<Transform>();
+
+            foreach (Transform transform in container.transform)
+            {
+                float dist = Vector3.Distance(mousePos, transform.transform.position);
+
+                if (dist <= radius)
+                {
+                    removeList.Add(transform);
+                }
+
+            }
+
+            // remove gameobjects
+            foreach( Transform transform in removeList)
+            {
+                PrefabPainter.DestroyImmediate(transform.gameObject);
+            }
+           
         }
 
         #endregion Paint Prefabs

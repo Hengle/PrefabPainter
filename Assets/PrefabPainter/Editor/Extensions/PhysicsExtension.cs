@@ -39,6 +39,8 @@ namespace PrefabPainter
             this.gizmo.physicsSimulation.forceAngleInDegrees = EditorGUILayout.FloatField("Force Angle (Degrees)", this.gizmo.physicsSimulation.forceAngleInDegrees);
             this.gizmo.physicsSimulation.randomizeForceAngle = EditorGUILayout.Toggle("Randomize Force Angle", this.gizmo.physicsSimulation.randomizeForceAngle);
 
+            // GUILayout.BeginHorizontal();
+
             if (GUILayout.Button("Run Simulation"))
             {
                 RunSimulation();
@@ -48,6 +50,8 @@ namespace PrefabPainter
             {
                 ResetAllBodies();
             }
+
+            // GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
         }

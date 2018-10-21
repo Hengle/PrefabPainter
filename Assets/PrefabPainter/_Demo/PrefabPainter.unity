@@ -157,7 +157,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   container: {fileID: 1160956117}
   mode: 1
-  paintSettings:
+  brushSettings:
     brushSize: 2
     alignToTerrain: 0
   prefabSettingsList:
@@ -400,9 +400,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   container: {fileID: 856329195}
-  mode: 1
-  paintSettings:
-    brushSize: 2
+  mode: 0
+  brushSettings:
+    brushSize: 5
     alignToTerrain: 0
   prefabSettingsList:
   - prefab: {fileID: 1414477670954642, guid: 626b903f2d0f0594389f3c7eef789aba, type: 2}
@@ -667,9 +667,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   container: {fileID: 1184859703}
   mode: 0
-  paintSettings:
+  brushSettings:
     brushSize: 2
-    alignToTerrain: 1
+    alignToTerrain: 0
   prefabSettingsList:
   - prefab: {fileID: 1768314851929904, guid: 852d20fafefd96d48a9ae55088ff0c06, type: 2}
     active: 1

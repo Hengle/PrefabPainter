@@ -15,7 +15,7 @@ namespace PrefabPainter
     public class PrefabPainter : MonoBehaviour
     {
 
-        public enum Mode { Paint, Spline, Container }
+        public enum Mode { Brush, Spline, Container }
 
         /// <summary>
         /// The parent of the instantiated prefabs 
@@ -30,7 +30,7 @@ namespace PrefabPainter
         /// The diameter of the brush
         /// </summary>
         [HideInInspector]
-        public PaintSettings paintSettings = new PaintSettings();
+        public BrushSettings brushSettings = new BrushSettings();
 
         /// <summary>
         /// The prefab that will be instantiated
