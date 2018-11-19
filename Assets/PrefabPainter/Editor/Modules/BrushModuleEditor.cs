@@ -11,10 +11,15 @@ namespace PrefabPainter
         #region Properties
 
         SerializedProperty brushSize;
+        SerializedProperty brushRotation;
         SerializedProperty allowOverlap;
         SerializedProperty alignToTerrain;
         SerializedProperty distribution;
         SerializedProperty poissonDiscSize;
+        SerializedProperty fallOffCurve;
+        SerializedProperty fallOff2dCurveX;
+        SerializedProperty fallOff2dCurveZ;
+        SerializedProperty curveSamplePoints;
 
         #endregion Properties
 
@@ -25,7 +30,7 @@ namespace PrefabPainter
         PrefabPainter gizmo;
 
 
-
+        private bool debug = false;
 
         private enum BrushMode
         {
@@ -40,9 +45,15 @@ namespace PrefabPainter
             this.gizmo = editor.GetPainter();
 
             brushSize = editor.FindProperty( x => x.brushSettings.brushSize);
+            brushRotation = editor.FindProperty(x => x.brushSettings.brushRotation);
+
             alignToTerrain = editor.FindProperty(x => x.brushSettings.alignToTerrain);
             distribution = editor.FindProperty(x => x.brushSettings.distribution);
             poissonDiscSize = editor.FindProperty(x => x.brushSettings.poissonDiscSize);
+            fallOffCurve = editor.FindProperty(x => x.brushSettings.fallOffCurve);
+            fallOff2dCurveX = editor.FindProperty(x => x.brushSettings.fallOff2dCurveX);
+            fallOff2dCurveZ = editor.FindProperty(x => x.brushSettings.fallOff2dCurveZ);
+            curveSamplePoints = editor.FindProperty(x => x.brushSettings.curveSamplePoints);
             allowOverlap = editor.FindProperty(x => x.brushSettings.allowOverlap);
 
         }
@@ -54,18 +65,38 @@ namespace PrefabPainter
             EditorGUILayout.LabelField("Brush settings", GUIStyles.BoxTitleStyle);
 
             EditorGUILayout.PropertyField(brushSize, new GUIContent("Brush Size"));
+            EditorGUILayout.PropertyField(brushRotation, new GUIContent("Brush Rotation"));
+
             EditorGUILayout.PropertyField(alignToTerrain, new GUIContent("Align To Terrain"));
             EditorGUILayout.PropertyField(allowOverlap, new GUIContent("Allow Overlap", "Center Mode: Check against brush size.\nPoisson Mode: Check against Poisson Disc size"));
 
             EditorGUILayout.PropertyField(distribution, new GUIContent("Distribution"));
 
-            if( gizmo.brushSettings.distribution == BrushSettings.Distribution.Poisson)
+            switch (gizmo.brushSettings.distribution)
             {
-                //EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(poissonDiscSize, new GUIContent("Poisson Disc Size"));
-                //EditorGUI.indentLevel--;
+                case BrushSettings.Distribution.Center:
+                    break;
+                case BrushSettings.Distribution.Poisson:
+                    //EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(poissonDiscSize, new GUIContent("Poisson Disc Size"));
+                    //EditorGUI.indentLevel--;
+                    break;
+                case BrushSettings.Distribution.FallOff:
+                    EditorGUILayout.PropertyField(curveSamplePoints, new GUIContent("Curve Sample Points"));
+                    EditorGUILayout.PropertyField(fallOffCurve, new GUIContent("FallOff"));
+                    break;
+                case BrushSettings.Distribution.FallOff2d:
+                    EditorGUILayout.PropertyField(curveSamplePoints, new GUIContent("Curve Sample Points"));
+                    EditorGUILayout.PropertyField(fallOff2dCurveX, new GUIContent("FallOff X"));
+                    EditorGUILayout.PropertyField(fallOff2dCurveZ, new GUIContent("FallOff Z"));
+                    break;
             }
 
+            // TODO: how to create a minmaxslider with propertyfield?
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Slope");
+            EditorGUILayout.MinMaxSlider(ref gizmo.brushSettings.slopeMin, ref gizmo.brushSettings.slopeMax, gizmo.brushSettings.slopeMinLimit, gizmo.brushSettings.slopeMaxLimit);
+            EditorGUILayout.EndHorizontal();
 
             // consistency check
             float minDiscSize = 0.01f;
@@ -110,22 +141,57 @@ namespace PrefabPainter
                     // mouse wheel up/down changes the radius
                     if (Event.current.type == EventType.ScrollWheel)
                     {
-
-                        if (Event.current.delta.y > 0)
+                        // ctrl + shift + scroll = brush rotation
+                        if( Event.current.shift)
                         {
-                            gizmo.brushSettings.brushSize++;
-                            Event.current.Use();
+                            int rotationStepSize = 10;
+                            int rotationMin = 0; // TODO: find out of to get that from Range
+                            int rotationMax = 360; // TODO: find out of to get that from Range
+
+                            // scroll up
+                            if (Event.current.delta.y > 0)
+                            {
+                                gizmo.brushSettings.brushRotation+= rotationStepSize;
+                                if (gizmo.brushSettings.brushRotation > rotationMax)
+                                {
+                                    gizmo.brushSettings.brushRotation = rotationMin + rotationStepSize;
+                                }
+                                Event.current.Use();
+                            }
+                            // scroll down
+                            else if (Event.current.delta.y < 0)
+                            {
+                                gizmo.brushSettings.brushRotation -= rotationStepSize;
+                                if (gizmo.brushSettings.brushRotation < rotationMin) { 
+                                    gizmo.brushSettings.brushRotation = rotationMax - rotationStepSize;
+                                }
+                                Event.current.Use();
+                            }
                         }
-                        else if (Event.current.delta.y < 0)
+                        // ctrl + scroll = brush size
+                        else
                         {
-                            gizmo.brushSettings.brushSize--;
+                            // scroll up
+                            if (Event.current.delta.y > 0)
+                            {
+                                gizmo.brushSettings.brushSize++;
+                                Event.current.Use();
+                            }
+                            // scroll down
+                            else if (Event.current.delta.y < 0)
+                            {
+                                gizmo.brushSettings.brushSize--;
 
-                            // TODO: slider
-                            if (gizmo.brushSettings.brushSize < 1)
-                                gizmo.brushSettings.brushSize = 1;
+                                // TODO: slider
+                                if (gizmo.brushSettings.brushSize < 1)
+                                    gizmo.brushSettings.brushSize = 1;
 
-                            Event.current.Use();
+                                Event.current.Use();
+                            }
                         }
+                        
+
+
                     }
 
                 }
@@ -187,7 +253,7 @@ namespace PrefabPainter
                 ShowHandleInfo( mousePos);
             }
 
-            string[] info = new string[] { "Add prefabs: shift + drag mouse\nRemove prefabs: shift + ctrl + drag mouse\nBrush size: ctrl + mousewheel" ,"Children: " + editor.getContainerChildren().Length };
+            string[] info = new string[] { "Add prefabs: shift + drag mouse\nRemove prefabs: shift + ctrl + drag mouse\nBrush size: ctrl + mousewheel, Brush rotation: ctrl + shift + mousewheel" ,"Children: " + editor.getContainerChildren().Length };
             PrefabPainterEditor.ShowGuiInfo(info);
 
             Handles.EndGUI();
@@ -216,32 +282,259 @@ namespace PrefabPainter
                     break;
             }
 
-            // inner disc
-            Handles.color = innerColor;
-            Handles.DrawSolidDisc(position, normal, radius);
 
-            // outer circle
-            Handles.color = outerColor;
-            Handles.DrawWireDisc(position, normal, radius);
 
-            // center line / normal
-            float lineLength = radius * 0.5f;
-            Vector3 lineStart = position;
-            Vector3 lineEnd = position + normal * lineLength;
-            Handles.DrawLine(lineStart, lineEnd);
+            // consider distribution
+            switch (gizmo.brushSettings.distribution)
+            {
+                case BrushSettings.Distribution.Center: // fallthrough
+                case BrushSettings.Distribution.Poisson:
+                    // inner disc
+                    Handles.color = innerColor;
+                    Handles.DrawSolidDisc(position, normal, radius);
+
+                    // outer circle
+                    Handles.color = outerColor;
+                    Handles.DrawWireDisc(position, normal, radius);
+
+                    // center line / normal
+                    float lineLength = radius * 0.5f;
+                    Vector3 lineStart = position;
+                    Vector3 lineEnd = position + normal * lineLength;
+                    Handles.DrawLine(lineStart, lineEnd);
+
+                    break;
+
+                case BrushSettings.Distribution.FallOff:
+
+                    // use same curve for x and z
+                    AnimationCurve fallOffCurve = gizmo.brushSettings.fallOffCurve;
+                    DrawCurveBrushSamplePoints(position, normal, innerColor, outerColor, fallOffCurve, fallOffCurve);
+
+                    // alternate version: draw rings
+                    // DrawCurveBrushSampleRings(position, normal, radius, innerColor, outerColor);
+
+                    break;
+
+                case BrushSettings.Distribution.FallOff2d:
+                    AnimationCurve fallOff2dCurveX = gizmo.brushSettings.fallOff2dCurveX;
+                    AnimationCurve fallOff2dCurveZ = gizmo.brushSettings.fallOff2dCurveZ;
+                    //DrawCurveBrushSamplePoints( position, normal, innerColor, outerColor, fallOff2dCurveX, fallOff2dCurveZ);
+                    DrawCurveBrushSamplePointsAsGrid(position, normal, innerColor, outerColor, fallOff2dCurveX, fallOff2dCurveZ);
+                    break;
+            }
 
 
         }
 
+        /// <summary>
+        /// Draw rings with alpha value set to the curve value
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="normal"></param>
+        /// <param name="radius"></param>
+        /// <param name="innerColor"></param>
+        /// <param name="outerColor"></param>
+        private void DrawCurveBrushSampleRings(Vector3 position, Vector3 normal, float radius, Color innerColor, Color outerColor)
+        {
+            // number of sample points in 1 direction, i. e. there will be n * n sample points
+            int samplePointsPerRow = gizmo.brushSettings.curveSamplePoints;
+
+            // the sample point distance on a [0,1] range, i. e. for 10 the distance will be 0.1
+            float samplePointDistanceNormalized = 1f / samplePointsPerRow;
+
+            AnimationCurve curve = gizmo.brushSettings.fallOffCurve;
+            for (var t = 0f; t <= 1f; t += samplePointDistanceNormalized)
+            {
+                float curvePoint = curve.Evaluate(t);
+
+                // ensure value is [0,1]
+                curvePoint = Mathf.Clamp01(curvePoint);
+
+                Handles.color = new Color(innerColor.r, innerColor.g, innerColor.b, curvePoint);
+
+                Handles.DrawWireDisc(position, normal, radius * t);
+
+            }
+        }
+
+        // TODO: just a testing function with discs
+        private void DrawCurveBrushSamplePoints(Vector3 position, Vector3 normal, Color innerColor, Color outerColor, AnimationCurve curveX, AnimationCurve curveZ)
+        {
+            // number of sample points in 1 direction, i. e. there will be n * n sample points
+            int samplePointsPerRow = gizmo.brushSettings.curveSamplePoints;
+
+            // the sample point distance on a [0,1] range, i. e. for 10 the distance will be 0.1
+            float samplePointDistanceNormalized = 1f / samplePointsPerRow;
+
+            for (var x = 0f; x <= 1f; x += samplePointDistanceNormalized)
+            {
+                for (var z = 0f; z <= 1f; z += samplePointDistanceNormalized)
+                {
+                    float curvePointX = curveX.Evaluate(x);
+                    float curvePointZ = curveZ.Evaluate(z);
+
+                    // ensure value is [0,1]
+                    curvePointX = Mathf.Clamp01(curvePointX);
+                    curvePointZ = Mathf.Clamp01(curvePointZ);
+
+                    float discSize = gizmo.brushSettings.brushSize * x; // is same as y
+
+                    Handles.color = new Color(innerColor.r, innerColor.g, innerColor.b, curvePointX * curvePointZ);
+
+                    float radius = gizmo.brushSettings.brushSize * samplePointDistanceNormalized * 0.5f;
+
+                    // TODO: align depending on brush size
+                    float xPosition = position.x - gizmo.brushSettings.brushSize * (x - 0.5f) - radius;
+                    float zPosition = position.z - gizmo.brushSettings.brushSize * (z - 0.5f) - radius;
+
+                    // high enough offset for y, in case the terrain below the brush aligned in it's normal direction isn't flat
+                    // otherwise parts might be above terrain while others might be below it; another way would be to do an additional up raycast
+                    float yRaystOffset = 3000f;
+                    float yPosition = position.y + yRaystOffset;
+
+                    // individual disc position, but with y offset
+                    Vector3 discPosition = new Vector3(xPosition, yPosition, zPosition);
+
+                    // y via raycast down
+                    // TODO: raycast hit against layer
+                    //       see https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
+                    RaycastHit hit;
+                    if (Physics.Raycast(discPosition, Vector3.down, out hit, Mathf.Infinity))
+                    {
+                        // set y position depending on the terrain
+                        discPosition.y = hit.point.y;
+
+                        // set the normal depending on the terrain
+                        normal = hit.normal;
+                    }
+
+                    // y via height sampling
+                    // discPosition.y = Terrain.activeTerrain.SampleHeight(discPosition);
+
+                    Handles.DrawSolidDisc(discPosition, normal, radius);
+
+                }
+
+            }
+        }
+
+        // TODO: just a testing function with rectangles
+        private void DrawCurveBrushSamplePointsAsGrid(Vector3 position, Vector3 normal, Color innerColor, Color outerColor, AnimationCurve curveX, AnimationCurve curveZ)
+        {
+            // number of sample points in 1 direction, i. e. there will be n * n sample points
+            int samplePointsPerRow = gizmo.brushSettings.curveSamplePoints;
+
+            // the sample point distance on a [0,1] range, i. e. for 10 the distance will be 0.1
+            float samplePointDistanceNormalized = 1f / samplePointsPerRow;
+
+            Vector3[,] v = new Vector3[samplePointsPerRow, samplePointsPerRow];
+            Color[,] c = new Color[samplePointsPerRow, samplePointsPerRow];
+
+            int i;
+            int j;
+            for ( i = 0; i < samplePointsPerRow; i++)
+            {
+                for ( j = 0; j < samplePointsPerRow; j++)
+                {
+
+                    float x = i * samplePointDistanceNormalized;
+                    float z = j * samplePointDistanceNormalized;
+
+                    float curvePointX = curveX.Evaluate(x);
+                    float curvePointZ = curveZ.Evaluate(z);
+
+                    // ensure value is [0,1]
+                    curvePointX = Mathf.Clamp01(curvePointX);
+                    curvePointZ = Mathf.Clamp01(curvePointZ);
+
+                    float discSize = gizmo.brushSettings.brushSize * x; // is same as y
+
+                    Handles.color = new Color(innerColor.r, innerColor.g, innerColor.b, curvePointX * curvePointZ);
+
+                    float radius = gizmo.brushSettings.brushSize * samplePointDistanceNormalized * 0.5f;
+
+                    // TODO: align depending on brush size
+                    float xPosition = position.x - gizmo.brushSettings.brushSize * (x - 0.5f) - radius;
+                    float zPosition = position.z - gizmo.brushSettings.brushSize * (z - 0.5f) - radius;
+
+                    // high enough offset for y, in case the terrain below the brush aligned in it's normal direction isn't flat
+                    // otherwise parts might be above terrain while others might be below it; another way would be to do an additional up raycast
+                    float yRaystOffset = 3000f;
+                    float yPosition = position.y + yRaystOffset;
+
+                    // individual disc position, but with y offset
+                    Vector3 discPosition = new Vector3(xPosition, yPosition, zPosition);
+
+                    // rotate around y world axis
+                    float angle = gizmo.brushSettings.brushRotation;
+                    discPosition -= position; // move to origin
+                    discPosition = Quaternion.Euler(0, angle, 0) * discPosition; // rotate around world axis
+                    discPosition += position; // move back to position
+
+                    // y via raycast down
+                    // TODO: raycast hit against layer
+                    //       see https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
+                    RaycastHit hit;
+                    if (Physics.Raycast(discPosition, Vector3.down, out hit, Mathf.Infinity))
+                    {
+                        // set y position depending on the terrain
+                        discPosition.y = hit.point.y;
+
+                        // set the normal depending on the terrain
+                        normal = hit.normal;
+
+                    }
+
+                    // y via height sampling
+                    // discPosition.y = Terrain.activeTerrain.SampleHeight(discPosition);
+
+                    v[i, j] = discPosition;
+                    c[i, j] = Handles.color;
+
+                    // slope
+                    float slopeAngle = Vector3.Angle(normal.normalized, new Vector3(0, 1, 0));
+                    //Handles.Label(discPosition, new GUIContent("angle: " + slopeAngle));
+
+                    // if brush area isn't inside the slope range, make the color almost transparent
+                    if( slopeAngle < gizmo.brushSettings.slopeMin || slopeAngle > gizmo.brushSettings.slopeMax)
+                    {
+                        c[i, j].a = 0.05f;
+                    }
+                }
+            }
+
+
+            for ( i = 0; i < v.GetLength(0) - 1; i++)
+            {
+                for ( j = 0; j < v.GetLength(1) - 1; j++)
+                {
+
+                    Vector3[] verts = new Vector3[]
+                    {
+                                    v[i,j],
+                                    v[i,j+1],
+                                    v[i+1,j+1],
+                                    v[i+1,j],
+                    };
+
+                    Handles.DrawSolidRectangleWithOutline(verts, c[i,j], new Color(0, 0, 0, c[i,j].a));
+                }
+            }
+        }
+
         private void ShowHandleInfo( Vector3 position)
         {
-            // example about how to show info at the gizmo
-            GUIStyle style = new GUIStyle();
-            style.normal.textColor = Color.blue;
-            string text = "Mouse Postion: " + position;
-            text += "\n";
-            text += "Children: " + editor.getContainerChildren().Length;
-            Handles.Label(position, text, style);
+            if (debug)
+            {
+                // example about how to show info at the gizmo
+                GUIStyle style = new GUIStyle();
+                style.normal.textColor = Color.blue;
+                string text = "Mouse Postion: " + position;
+                text += "\n";
+                text += "Children: " + editor.getContainerChildren().Length;
+                Handles.Label(position, text, style);
+            }
         }
 
 
@@ -259,6 +552,12 @@ namespace PrefabPainter
                     break;
                 case BrushSettings.Distribution.Poisson:
                     AddPrefabs_Poisson(hit.point, hit.normal);
+                    break;
+                case BrushSettings.Distribution.FallOff:
+                    Debug.Log("Not implemented yet: " + gizmo.brushSettings.distribution);
+                    break;
+                case BrushSettings.Distribution.FallOff2d:
+                    Debug.Log("Not implemented yet: " + gizmo.brushSettings.distribution);
                     break;
             }
 
