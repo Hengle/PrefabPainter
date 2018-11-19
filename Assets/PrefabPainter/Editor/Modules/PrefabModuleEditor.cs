@@ -182,6 +182,13 @@ namespace PrefabPainter
                     prefabSettings.rotationOffset = EditorGUILayout.Vector3Field("Rotation Offset", prefabSettings.rotationOffset);
                     prefabSettings.randomRotation = EditorGUILayout.Toggle("Random Rotation", prefabSettings.randomRotation);
 
+                    // VS Pro Id
+#if VEGETATION_STUDIO_PRO
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.TextField("Asset GUID", prefabSettings.assetGUID);
+                    EditorGUILayout.TextField("VSPro Id", prefabSettings.vspro_VegetationItemID);
+                    EditorGUI.EndDisabledGroup();
+#endif
                 }
             }
 

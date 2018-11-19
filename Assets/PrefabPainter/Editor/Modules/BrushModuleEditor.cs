@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+#if VEGETATION_STUDIO_PRO
+using AwesomeTechnologies.Vegetation.PersistentStorage;
+using AwesomeTechnologies.VegetationSystem;
+using AwesomeTechnologies.VegetationStudio;
+#endif
 
 namespace PrefabPainter
 {
@@ -20,6 +25,7 @@ namespace PrefabPainter
         SerializedProperty fallOff2dCurveX;
         SerializedProperty fallOff2dCurveZ;
         SerializedProperty curveSamplePoints;
+        SerializedProperty spawnToVSPro;
 
         #endregion Properties
 
@@ -56,6 +62,7 @@ namespace PrefabPainter
             curveSamplePoints = editor.FindProperty(x => x.brushSettings.curveSamplePoints);
             allowOverlap = editor.FindProperty(x => x.brushSettings.allowOverlap);
 
+            spawnToVSPro = editor.FindProperty(x => x.brushSettings.spawnToVSPro);
         }
 
         public void OnInspectorGUI()
@@ -97,6 +104,10 @@ namespace PrefabPainter
             EditorGUILayout.PrefixLabel("Slope");
             EditorGUILayout.MinMaxSlider(ref gizmo.brushSettings.slopeMin, ref gizmo.brushSettings.slopeMax, gizmo.brushSettings.slopeMinLimit, gizmo.brushSettings.slopeMaxLimit);
             EditorGUILayout.EndHorizontal();
+
+            #if VEGETATION_STUDIO_PRO
+                EditorGUILayout.PropertyField(spawnToVSPro, new GUIContent("Spawn to VS Pro"));
+            #endif
 
             // consistency check
             float minDiscSize = 0.01f;
@@ -407,6 +418,7 @@ namespace PrefabPainter
 
                         // set the normal depending on the terrain
                         normal = hit.normal;
+
                     }
 
                     // y via height sampling
@@ -602,6 +614,60 @@ namespace PrefabPainter
             }
         }
 
+        /// <summary>
+        /// Ensure the prefab has a VegetationItemID
+        /// </summary>
+        /// <param name="prefabSettings"></param>
+        private void updateVSProSettings(PrefabSettings prefabSettings, bool forceVegetationItemIDUpdate)
+        {
+#if VEGETATION_STUDIO_PRO
+
+            GameObject prefab = prefabSettings.prefab;
+
+            // check if we have a VegetationItemID, otherwise create it using the current prefab
+            if (string.IsNullOrEmpty(prefabSettings.vspro_VegetationItemID) || forceVegetationItemIDUpdate)
+            {
+                // get the asset guid
+                if (string.IsNullOrEmpty(prefabSettings.assetGUID))
+                {
+                    string assetPath = AssetDatabase.GetAssetPath(prefab);
+                    if (!string.IsNullOrEmpty(assetPath))
+                    {
+                        string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
+                        prefabSettings.assetGUID = assetGUID;
+                    }
+                }
+
+                // if we have a guid, get the vs pro id
+                if (!string.IsNullOrEmpty(prefabSettings.assetGUID))
+                {
+                    // get the VegetationItemID
+                    prefabSettings.vspro_VegetationItemID = VegetationStudioManager.GetVegetationItemID(prefabSettings.assetGUID);
+
+                    // if the vegetation item id doesn't exist, create a new vegetation item
+                    if (string.IsNullOrEmpty(prefabSettings.vspro_VegetationItemID))
+                    {
+                        VegetationType vegetationType = VegetationType.Objects;
+                        bool enableRuntimeSpawn = false; // no runtime spawn, we want it spawned from persistent storage
+                        BiomeType biomeType = BiomeType.Default;
+
+                        prefabSettings.vspro_VegetationItemID = VegetationStudioManager.AddVegetationItem(prefab, vegetationType, enableRuntimeSpawn, biomeType);
+                    }
+
+                }
+                else
+                {
+                    Debug.LogError("Can't get assetGUID for prefab " + prefab);
+                }
+            }
+
+            if (string.IsNullOrEmpty(prefabSettings.vspro_VegetationItemID))
+            {
+                Debug.LogError("Can't get VegetationItemId for prefab " + prefab);
+            }
+#endif
+        }
+
         private void AddNewPrefab( Vector3 position, Vector3 normal)
         {
 
@@ -609,43 +675,88 @@ namespace PrefabPainter
 
             PrefabSettings prefabSettings = this.gizmo.GetPrefabSettings();
 
-            // new prefab
-            GameObject instance = PrefabUtility.InstantiatePrefab(prefabSettings.prefab) as GameObject;
+            GameObject prefab = prefabSettings.prefab;
+
+            ///
+            /// Calculate position / rotation / scale
+            /// 
+
+            // get new position
+            Vector3 newPosition = position;
+
+            // add offset
+            newPosition += prefabSettings.positionOffset;
+
+            Vector3 newLocalScale = prefabSettings.prefab.transform.localScale;
 
             // size
             if (prefabSettings.changeScale)
             {
-                instance.transform.localScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
+                newLocalScale = Vector3.one * Random.Range(prefabSettings.scaleMin, prefabSettings.scaleMax);
             }
 
-            // position
-            instance.transform.position = position;
-
-            // add offset
-            instance.transform.position += prefabSettings.positionOffset;
-
             // rotation
-            Quaternion rotation;
+            Quaternion newRotation;
             if (prefabSettings.randomRotation)
             {
-                rotation = Random.rotation;
+                newRotation = Random.rotation;
             }
             else if (this.gizmo.brushSettings.alignToTerrain)
             {
-                rotation = Quaternion.FromToRotation(Vector3.up, normal);
+                newRotation = Quaternion.FromToRotation(Vector3.up, normal);
             }
             else
             {
-                rotation = Quaternion.Euler(prefabSettings.rotationOffset);
+                newRotation = Quaternion.Euler(prefabSettings.rotationOffset);
                 //rotation = Quaternion.identity;
             }
 
-            instance.transform.rotation = rotation;
+            ///
+            /// create instance and apply position / rotation / scale
+            /// 
 
-            // attach as child of container
-            instance.transform.parent = container.transform;
+            // spawn item to vs pro
+            if ( gizmo.brushSettings.spawnToVSPro)
+            {
+#if VEGETATION_STUDIO_PRO
 
-            Undo.RegisterCreatedObjectUndo(instance, "Instantiate Prefab");
+                // ensure the prefab has a VegetationItemID
+                updateVSProSettings( prefabSettings, true);
+
+                if( !string.IsNullOrEmpty( prefabSettings.vspro_VegetationItemID))
+                {
+                    string vegetationItemID = prefabSettings.vspro_VegetationItemID;
+                    Vector3 worldPosition = position;
+                    Vector3 scale = newLocalScale; // TODO local or world?
+                    Quaternion rotation = newRotation;
+                    bool applyMeshRotation = true; // TODO ???
+                    byte vegetationSourceID = 5; // TODO see PersistentVegetationStorageTools for constants. 5 = "Vegetation Studio - Painted"
+                    float distanceFalloff = 1f; // TODO ???
+                    bool clearCellCache = true; // TODO ???
+
+                    VegetationStudioManager.AddVegetationItemInstance(vegetationItemID, worldPosition, scale, rotation, applyMeshRotation, vegetationSourceID, distanceFalloff, clearCellCache);
+
+                }
+#endif
+            }
+            // spawn item to scene
+            else
+            {
+
+                // new prefab
+                GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+                instance.transform.position = newPosition;
+                instance.transform.rotation = newRotation;
+                instance.transform.localScale = newLocalScale;
+
+                // attach as child of container
+                instance.transform.parent = container.transform;
+
+                Undo.RegisterCreatedObjectUndo(instance, "Instantiate Prefab");
+
+            }
+
         }
 
         /// <summary>
@@ -747,7 +858,7 @@ namespace PrefabPainter
            
         }
 
-        #endregion Paint Prefabs
+#endregion Paint Prefabs
     }
 
 }

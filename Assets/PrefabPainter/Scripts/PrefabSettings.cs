@@ -66,6 +66,15 @@ namespace PrefabPainter
         [HideInInspector]
         public float scaleMax = 1.5f;
 
+        /// <summary>
+        /// Storing asset GUID here for future reference (performance reasons)
+        /// </summary>
+        public string assetGUID = null;
+
+        /// <summary>
+        /// Vegetation Studio Pro vspro_VegetationItemID
+        /// </summary>
+        public string vspro_VegetationItemID = null;
 
         public PrefabSettings Clone()
         {

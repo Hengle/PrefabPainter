@@ -50,5 +50,10 @@ namespace PrefabPainter
         /// Allow prefab overlaps or not.
         /// </summary>
         public bool allowOverlap = false;
+
+        /// <summary>
+        /// Optionally spawn into the Persistent Storage of Vegetation Studio Pro
+        /// </summary>
+        public bool spawnToVSPro = false;
     }
 }
