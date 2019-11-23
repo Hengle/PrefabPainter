@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   container: {fileID: 1160956117}
-  mode: 0
+  mode: 1
   brushSettings:
     brushSize: 2
     brushRotation: 0
@@ -930,7 +930,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   container: {fileID: 1552582810}
-  mode: 0
+  mode: 1
   brushSettings:
     brushSize: 19
     brushRotation: 0

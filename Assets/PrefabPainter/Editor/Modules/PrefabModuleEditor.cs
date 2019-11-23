@@ -38,8 +38,12 @@ namespace Yapp
                         }
 
                         // drop area
-                        Rect prefabDropArea = GUILayoutUtility.GetRect(0.0f, 24.0f, GUIStyles.DropAreaStyle, GUILayout.ExpandWidth(true));
+                        Rect prefabDropArea = GUILayoutUtility.GetRect(0.0f, 34.0f, GUIStyles.DropAreaStyle, GUILayout.ExpandWidth(true));
+
+                        // drop area box with background color and info text
+                        GUI.color = GUIStyles.DropAreaBackgroundColor;
                         GUI.Box(prefabDropArea, "Drop prefabs here in order to use them", GUIStyles.DropAreaStyle);
+                        GUI.color = GUIStyles.DefaultBackgroundColor;
 
                         editor.SetDefaultBackgroundColor();
 
@@ -70,9 +74,9 @@ namespace Yapp
                                         {
 
                                             // allow only prefabs
-                                            if (PrefabUtility.GetPrefabType(droppedObject) == PrefabType.None)
+                                            if (PrefabUtility.GetPrefabAssetType(droppedObject) == PrefabAssetType.NotAPrefab)
                                             {
-                                                Debug.Log("Not a gameobject: " + droppedObject);
+                                                Debug.Log("Not a prefab: " + droppedObject);
                                                 continue;
                                             }
 

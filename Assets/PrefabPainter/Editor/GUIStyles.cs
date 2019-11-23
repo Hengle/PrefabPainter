@@ -48,5 +48,7 @@ namespace Yapp
         public static Color BrushRemoveInnerColor = new Color(1f, 0f, 0f, 0.05f); // red tone
         public static Color BrushRemoveOuterColor = new Color(1f, 0f, 0f, 1f); // red tone
 
+        public static Color DropAreaBackgroundColor = new Color(0.8f, 0.8f, 0.8f, 1f); // gray tone
+
     }
 }
