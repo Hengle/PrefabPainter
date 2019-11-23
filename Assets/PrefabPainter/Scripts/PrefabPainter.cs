@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace PrefabPainter
+namespace Yapp
 {
     /// <summary>
     /// Prefab painter
@@ -63,12 +63,23 @@ namespace PrefabPainter
         /// </summary>
         public SplineModule splineModule = null;
 
-        void OnDrawGizmos()
+        /// <summary>
+        /// This function is called when the script is loaded or a value is changed in the Inspector (Called in the editor only).
+        /// You can use this to ensure that when you modify data in an editor, that data stays within a certain range.
+        /// https://docs.unity3d.com/ScriptReference/MonoBehaviour.OnValidate.html
+        /// </summary>
+        void OnValidate()
         {
-             if ( splineModule == null)
+            if (splineModule == null)
             {
                 splineModule = new SplineModule(this);
             }
+
+        }
+
+        void OnDrawGizmos()
+        {
+
             splineModule.OnDrawGizmos();
 
         }

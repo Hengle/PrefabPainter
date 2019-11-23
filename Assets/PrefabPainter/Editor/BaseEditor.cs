@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq.Expressions;
 
-namespace PrefabPainter
+namespace Yapp
 {
     public class BaseEditor<T> : Editor
         where T : MonoBehaviour

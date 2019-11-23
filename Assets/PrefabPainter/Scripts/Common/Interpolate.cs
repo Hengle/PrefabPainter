@@ -4,7 +4,7 @@ using UnityEngine;
 
 
 // source: http://wiki.unity3d.com/index.php/Interpolate#Interpolate.cs
-namespace PrefabPainter
+namespace Yapp
 {
     /**
      * Interpolation utility functions: easing, bezier, and catmull-rom.

@@ -9,7 +9,7 @@ using AwesomeTechnologies.VegetationSystem;
 using AwesomeTechnologies.VegetationStudio;
 #endif
 
-namespace PrefabPainter
+namespace Yapp
 {
     public class BrushModuleEditor: ModuleEditorI
     {

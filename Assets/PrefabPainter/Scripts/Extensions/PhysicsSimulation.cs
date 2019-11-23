@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-namespace PrefabPainter
+namespace Yapp
 {
     public class PhysicsSimulation : ScriptableObject
     {

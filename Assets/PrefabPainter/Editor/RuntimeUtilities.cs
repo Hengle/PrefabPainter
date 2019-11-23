@@ -20,7 +20,7 @@ using UnityEditor;
 /// 
 /// Source: https://github.com/Unity-Technologies/PostProcessing/blob/v2/PostProcessing/Runtime/Utils/RuntimeUtilities.cs
 /// </summary>
-namespace PrefabPainter
+namespace Yapp
 {
     public static class RuntimeUtilities
     {

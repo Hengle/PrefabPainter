@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PrefabPainter
+namespace Yapp
 {
     public class ControlPoint
     {

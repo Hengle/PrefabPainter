@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-namespace PrefabPainter
+namespace Yapp
 {
     /// <summary>
     /// Prefab Painter allows you to paint prefabs in the scene
