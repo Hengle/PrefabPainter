@@ -2,21 +2,30 @@ Introduction
 -------------------------------------------------
 Prefab Painter allows you to paint prefabs in the scene
 
-Supported Unity Versions: 2018+
+Supported Unity Versions: 2019+
 
 Usage
 -------------------------------------------------
 
 General
+	* right mouse button in Hierarchy -> Yapp -> Create PrefabPainter
+
+	or
 
 	* create container gameobject for the instantiated prefabs
 	* create an editor gameobject, add the PrefabPainter script to it
 	* in the inspector assign the container and a prefab to the prefab painter editor settings
 
+	then
+
+	* assign a container or create a new one by pressing the New button
+	* drop prefabs into the prefab drop area
+	* adjust prefab distribution settings
+
 Paint Mode
 
 	* in scene view adjust the radius via ctrl + mouse wheel
-	* start painting prefabs by clicking left mouse button and dragging the mouse
+	* start painting prefabs by holding shift & dragging the mouse while holding the left mouse button
 
 Spline Mode
 
@@ -26,7 +35,7 @@ Spline Mode
 		+ bounds: add (and delete) control points only to start and end control points
 		+ inbetween: add (and delete) control points between control points
 
-Gravity
+Operations
 
 	* paint prefabs, as describe in General
 	* hit "Run Simulation" in the Physics Settings
@@ -43,7 +52,6 @@ Features in future updates
 + limit rotation
 + consider prefab dimensions during distribution, align them next to each other
 + random distance during distribution
-+ wizard to create prefabpainter gameobject and the group container
 + check if playmode is affected, maybe disable component when Application.isPlaying()
 + prefabmodule: serializedproperty in list
 

@@ -88,7 +88,7 @@ namespace Yapp
             /// 
             /// Version Info
             /// 
-            EditorGUILayout.HelpBox("Prefab Painter v0.3 (Alpha)", MessageType.Info);
+            EditorGUILayout.HelpBox("Prefab Painter v0.9 (Beta)", MessageType.Info);
 
             /// 
             /// General settings
