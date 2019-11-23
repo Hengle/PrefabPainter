@@ -1,6 +1,6 @@
 Introduction
 -------------------------------------------------
-Prefab Painter allows you to paint prefabs in the scene
+Yapp (Yet Another Prefab Painter) allows you to paint prefabs in the scene.
 
 Supported Unity Versions: 2019+
 
