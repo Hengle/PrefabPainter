@@ -189,9 +189,9 @@ namespace Yapp
                     // rotation limits
                     if (prefabSettings.randomRotation)
                     {
-                        EditorGuiUtilities.MinMaxEditor("Rotation Limit X", ref prefabSettings.rotationMinX, ref prefabSettings.rotationMaxX, 0, 360);
-                        EditorGuiUtilities.MinMaxEditor("Rotation Limit Y", ref prefabSettings.rotationMinY, ref prefabSettings.rotationMaxY, 0, 360);
-                        EditorGuiUtilities.MinMaxEditor("Rotation Limit Z", ref prefabSettings.rotationMinZ, ref prefabSettings.rotationMaxZ, 0, 360);
+                        EditorGuiUtilities.MinMaxEditor("  Rotation Limit X", ref prefabSettings.rotationMinX, ref prefabSettings.rotationMaxX, 0, 360);
+                        EditorGuiUtilities.MinMaxEditor("  Rotation Limit Y", ref prefabSettings.rotationMinY, ref prefabSettings.rotationMaxY, 0, 360);
+                        EditorGuiUtilities.MinMaxEditor("  Rotation Limit Z", ref prefabSettings.rotationMinZ, ref prefabSettings.rotationMaxZ, 0, 360);
                     }
 
                     // VS Pro Id
