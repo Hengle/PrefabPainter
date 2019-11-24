@@ -52,7 +52,7 @@ A big shoutout to the awesome people of the Unity Community who provided tutoria
 
 #### Container based
 
-Operates on gameobjects which are considered containers (or folders) and contain the actual prefab instances
+Operates on gameobjects which are considered containers (or folders) for grouping and contain the actual prefab instances
 
 ![container](https://user-images.githubusercontent.com/10963432/69490829-67a0f200-0e8d-11ea-9c08-f8129a99ab7e.png)
 
