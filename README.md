@@ -83,8 +83,8 @@ Operates on gameobjects which are considered containers (or folders) for groupin
   * Curve Resolution: sharpness, from sharp corners to round curves
   * Loop: connect start with end point
   * Separation
-    * Fixed Sistance Distance
-    * Prefab Bounds determine
+    * Fixed distance
+    * Prefab Bounds determine distance
   * Multiple Lanes along a single Spline
     * Lane Distance
   * Rotation
