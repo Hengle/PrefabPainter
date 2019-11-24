@@ -34,7 +34,7 @@ The created prefab painter looks like this initially in the inspector:
 
 There are 2 things that are now required:
 
-* a container to put your prefabs in. You can use any gameobject for that. For simplicity when you hit the New button, a container is generated automatically as child object of your prefab painter gameobject. But you can use whatever you prefer, it doesn't necessarily have to be a child. Just drag your container gameobject into the container slot.
+* a container to put your prefabs in. You can use any gameobject for that. For convenience when you hit the New button, a container is generated automatically as child object of your prefab painter gameobject. But you can use whatever you prefer, it doesn't necessarily have to be a child. Just drag your container gameobject into the container slot.
 
 * prefabs which should be instantiated in the scene by this prefab painter and put into the specified container. The container can be cleared, i. e. the container children deleted, by using the Clear button.
 
