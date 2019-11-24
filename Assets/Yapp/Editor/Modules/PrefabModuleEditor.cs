@@ -186,6 +186,14 @@ namespace Yapp
                     prefabSettings.rotationOffset = EditorGUILayout.Vector3Field("Rotation Offset", prefabSettings.rotationOffset);
                     prefabSettings.randomRotation = EditorGUILayout.Toggle("Random Rotation", prefabSettings.randomRotation);
 
+                    // rotation limits
+                    if (prefabSettings.randomRotation)
+                    {
+                        EditorGuiUtilities.MinMaxEditor("Rotation Limit X", ref prefabSettings.rotationMinX, ref prefabSettings.rotationMaxX, 0, 360);
+                        EditorGuiUtilities.MinMaxEditor("Rotation Limit Y", ref prefabSettings.rotationMinY, ref prefabSettings.rotationMaxY, 0, 360);
+                        EditorGuiUtilities.MinMaxEditor("Rotation Limit Z", ref prefabSettings.rotationMinZ, ref prefabSettings.rotationMaxZ, 0, 360);
+                    }
+
                     // VS Pro Id
 #if VEGETATION_STUDIO_PRO
                     EditorGUI.BeginDisabledGroup(true);

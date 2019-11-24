@@ -49,6 +49,36 @@ namespace Yapp
         public bool randomRotation;
 
         /// <summary>
+        /// Minimum X rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMinX = 0f;
+
+        /// <summary>
+        /// Maximum X rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMaxX = 360f;
+
+        /// <summary>
+        /// Minimum Y rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMinY = 0f;
+
+        /// <summary>
+        /// Maximum Y rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMaxY = 360f;
+
+        /// <summary>
+        /// Minimum Z rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMinZ = 0f;
+
+        /// <summary>
+        /// Maximum Z rotation in degrees when random rotation is used.
+        /// </summary>
+        public float rotationMaxZ = 360f;
+
+        /// <summary>
         /// Randomize Scale Minimum
         /// </summary>
         [HideInInspector]

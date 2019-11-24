@@ -396,7 +396,11 @@ namespace Yapp
                     // rotation of the prefab
                     if (prefabSettings.randomRotation)
                     {
-                        rotation = Random.rotation;
+                        float rotationX = Random.Range(prefabSettings.rotationMinX, prefabSettings.rotationMaxX);
+                        float rotationY = Random.Range(prefabSettings.rotationMinY, prefabSettings.rotationMaxY);
+                        float rotationZ = Random.Range(prefabSettings.rotationMinZ, prefabSettings.rotationMaxZ);
+
+                        rotation = Quaternion.Euler(rotationX, rotationY, rotationZ);
                     }
                     break;
             }

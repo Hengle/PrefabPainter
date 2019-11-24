@@ -699,7 +699,13 @@ namespace Yapp
             Quaternion newRotation;
             if (prefabSettings.randomRotation)
             {
-                newRotation = Random.rotation;
+                
+                float rotationX = Random.Range( prefabSettings.rotationMinX, prefabSettings.rotationMaxX);
+                float rotationY = Random.Range( prefabSettings.rotationMinY, prefabSettings.rotationMaxY);
+                float rotationZ = Random.Range( prefabSettings.rotationMinZ, prefabSettings.rotationMaxZ);
+
+                newRotation = Quaternion.Euler( rotationX, rotationY, rotationZ);
+
             }
             else if (this.gizmo.brushSettings.alignToTerrain)
             {

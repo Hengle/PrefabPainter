@@ -259,6 +259,12 @@ MonoBehaviour:
     positionOffset: {x: 0, y: 1.6, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
@@ -479,10 +485,10 @@ MonoBehaviour:
   container: {fileID: 856329195}
   mode: 0
   brushSettings:
-    brushSize: 33.589996
+    brushSize: 8.589996
     brushRotation: 350
-    alignToTerrain: 1
-    distribution: 1
+    alignToTerrain: 0
+    distribution: 0
     poissonDiscSize: 7.13
     fallOffCurve:
       serializedVersion: 2
@@ -559,28 +565,40 @@ MonoBehaviour:
     curveSamplePoints: 16
     slopeMin: 0
     slopeMinLimit: 0
-    slopeMax: 25.714289
+    slopeMax: 25.714308
     slopeMaxLimit: 90
     allowOverlap: 0
     spawnToVSPro: 0
   prefabSettingsList:
   - prefab: {fileID: 1414477670954642, guid: 626b903f2d0f0594389f3c7eef789aba, type: 3}
-    active: 1
+    active: 0
     probability: 1
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
     assetGUID: 
     vspro_VegetationItemID: 
   - prefab: {fileID: 1440074246936570, guid: b44914f1863d89944975413951b5cb2b, type: 3}
-    active: 1
+    active: 0
     probability: 1
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 212.51619
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
@@ -591,18 +609,30 @@ MonoBehaviour:
     probability: 1
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
-    randomRotation: 0
+    randomRotation: 1
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
     assetGUID: 
     vspro_VegetationItemID: 
   - prefab: {fileID: 1929132347765138, guid: 33fa12decdc1b854d8a53d2ccbfc2c83, type: 3}
-    active: 1
+    active: 0
     probability: 1
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
@@ -1023,6 +1053,12 @@ MonoBehaviour:
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
@@ -1034,6 +1070,12 @@ MonoBehaviour:
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     randomRotation: 0
+    rotationMinX: 0
+    rotationMaxX: 360
+    rotationMinY: 0
+    rotationMaxY: 360
+    rotationMinZ: 0
+    rotationMaxZ: 360
     changeScale: 0
     scaleMin: 0.5
     scaleMax: 1.5
