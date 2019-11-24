@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Many prefab painters out there for Unity already, this is yet another one. In case you have use for this one, feel free. 
+There are already many prefab painters out there for Unity, this is yet another one. In case you have use for this one, feel free. 
 
 It's Open Source, so also feel free to fork, modify and add more features to it.
 
