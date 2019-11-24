@@ -80,7 +80,7 @@ Operates on gameobjects which are considered containers (or folders) for groupin
 
 ####  Spline settings
 
-  * Curve Resolution: sharp or round
+  * Curve Resolution: sharpness, from sharp corners to round ones
   * Loop: connect start with end point
   * Separation
     * Fixed Sistance Distance
