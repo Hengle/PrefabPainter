@@ -56,16 +56,11 @@ namespace Yapp
                 foreach (GameObject prefab in prefabPainter.splineSettings.prefabInstances)
                 {
 
-                    Renderer renderer = prefab.GetComponent<Renderer>();
-                    if (renderer == null)
-                    {
-                        // LOD case: renderer is in the children
-                        renderer = prefab.GetComponentInChildren<Renderer>();
-                    }
+                    Bounds bounds = GetPrefabBounds(prefab);
 
                     // https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
-                    Vector3 center = renderer.bounds.center;
-                    float radius = renderer.bounds.extents.magnitude;
+                    Vector3 center = bounds.center;
+                    float radius = bounds.extents.magnitude;
 
                     // sphere
                     Gizmos.color = Color.white;
@@ -73,7 +68,7 @@ namespace Yapp
 
                     // rectangle
                     Gizmos.color = Color.yellow;
-                    Gizmos.DrawWireCube(center, renderer.bounds.size);
+                    Gizmos.DrawWireCube(center, bounds.size);
 
 
                 }
@@ -242,7 +237,7 @@ namespace Yapp
                     break;
 
                 case SplineSettings.Separation.PrefabBounds:
-                    return GetPrefabSize( prefab);
+                    return GetPrefabRadius( prefab);
 
             }
 
@@ -257,8 +252,14 @@ namespace Yapp
 
         }
 
-        private float GetPrefabSize( GameObject prefab)
+        /// <summary>
+        /// Get the enclosing bounds of the prefab, including children (e. g. in case of a house including doors, windows, etc)
+        /// </summary>
+        /// <param name="prefab"></param>
+        /// <returns></returns>
+        private Bounds GetPrefabBounds(GameObject prefab)
         {
+
             Renderer renderer = prefab.GetComponent<Renderer>();
             if (renderer == null)
             {
@@ -266,9 +267,23 @@ namespace Yapp
                 renderer = prefab.GetComponentInChildren<Renderer>();
             }
 
+            // calculate bounds including children (eg houses including windows, doors, etc)
+            Bounds bounds = renderer.bounds;
+            foreach (var r in prefab.GetComponentsInChildren<Renderer>())
+            {
+                bounds.Encapsulate(r.bounds);
+            }
+
+            return bounds;
+        }
+
+        private float GetPrefabRadius( GameObject prefab)
+        {
+            Bounds bounds = GetPrefabBounds(prefab);
+
             // https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
             //float radius = renderer.bounds.extents.magnitude;
-            float radius = renderer.bounds.size.magnitude;
+            float radius = bounds.size.magnitude;
 
             return radius;
         }
