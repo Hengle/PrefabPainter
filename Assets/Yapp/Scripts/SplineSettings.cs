@@ -23,6 +23,7 @@ namespace Yapp
         public enum Separation
         {
             Fixed,
+            Range,
             PrefabBounds
         }
 
@@ -31,7 +32,21 @@ namespace Yapp
         public bool loop = false;
 
         public Separation separation = Separation.Fixed;
+
+        /// <summary>
+        /// Fixed separation distance
+        /// </summary>
         public float separationDistance = 1f;
+
+        /// <summary>
+        /// Additional separation distance minimum when using Range or Bounds
+        /// </summary>
+        public float separationDistanceMin = 0f;
+
+        /// <summary>
+        /// Additional separation distance maximum when using Range or Bounds
+        /// </summary>
+        public float separationDistanceMax = 1f;
 
         public Rotation instanceRotation = Rotation.Prefab;
 

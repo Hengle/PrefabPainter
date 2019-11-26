@@ -236,13 +236,23 @@ namespace Yapp
                     distanceToMove = prefabPainter.splineSettings.separationDistance;
                     break;
 
+                case SplineSettings.Separation.Range:
+                    distanceToMove = Random.Range(prefabPainter.splineSettings.separationDistanceMin, prefabPainter.splineSettings.separationDistanceMax);
+                    break;
+
                 case SplineSettings.Separation.PrefabBounds:
-                    return GetPrefabRadius( prefab);
+                    distanceToMove = GetPrefabRadius( prefab);
+
+                    // add additional distance to move
+                    distanceToMove += Random.Range(prefabPainter.splineSettings.separationDistanceMin, prefabPainter.splineSettings.separationDistanceMax);
+
+                    break;
 
             }
 
+
             // don't return 0, we wouldn't want an endless loop because we can't advance further
-            if( distanceToMove <= 0)
+            if ( distanceToMove <= 0)
             {
                 Debug.LogError("Distance to move is <= 0. Using 1");
                 distanceToMove = 1;

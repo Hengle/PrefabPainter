@@ -14,6 +14,8 @@ namespace Yapp
         SerializedProperty loop;
         SerializedProperty separation;
         SerializedProperty separationDistance;
+        SerializedProperty separationDistanceMin;
+        SerializedProperty separationDistanceMax;
         SerializedProperty lanes;
         SerializedProperty laneDistance;
         SerializedProperty skipCenterLane;
@@ -48,6 +50,9 @@ namespace Yapp
             separation = editor.FindProperty(x => x.splineSettings.separation);
             separationDistance = editor.FindProperty(x => x.splineSettings.separationDistance);
 
+            separationDistanceMin = editor.FindProperty(x => x.splineSettings.separationDistanceMin);
+            separationDistanceMax = editor.FindProperty(x => x.splineSettings.separationDistanceMax);
+
             lanes = editor.FindProperty(x => x.splineSettings.lanes);
             laneDistance = editor.FindProperty(x => x.splineSettings.laneDistance);
             skipCenterLane = editor.FindProperty(x => x.splineSettings.skipCenterLane);
@@ -77,9 +82,18 @@ namespace Yapp
             EditorGUILayout.PropertyField(loop, new GUIContent("Loop"));
 
             EditorGUILayout.PropertyField(separation, new GUIContent("Separation"));
+
             if (gizmo.splineSettings.separation == SplineSettings.Separation.Fixed)
             {
-                EditorGUILayout.PropertyField(separationDistance, new GUIContent("Separation Distance"));
+                EditorGUILayout.PropertyField(separationDistance, new GUIContent("  Distance"));
+            }
+            else if (gizmo.splineSettings.separation == SplineSettings.Separation.Range)
+            {
+                EditorGuiUtilities.MinMaxEditor("  Distance Min", ref separationDistanceMin, "  Distance Max", ref separationDistanceMax);
+            }
+            else if (gizmo.splineSettings.separation == SplineSettings.Separation.PrefabBounds)
+            {
+                EditorGuiUtilities.MinMaxEditor("  Distance Min", ref separationDistanceMin, "  Distance Max", ref separationDistanceMax);
             }
 
             EditorGUILayout.PropertyField(lanes, new GUIContent("Lanes"));
