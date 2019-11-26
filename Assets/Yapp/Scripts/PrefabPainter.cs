@@ -77,7 +77,7 @@ namespace Yapp
 
         }
 
-        void OnDrawGizmos()
+        void OnDrawGizmosSelected()
         {
 
             splineModule.OnDrawGizmos();
